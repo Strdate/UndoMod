@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Harmony;
 using System.Text;
 using UnityEngine;
 
@@ -12,11 +13,10 @@ namespace UndoMod.Patches
     public class NetToolPatch
     {
         public static MethodInfo createNode_original = typeof(NetTool).GetMethod("CreateNodeImpl", BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[] { typeof(bool) }, null);
-        public static MethodInfo patch = typeof(NetToolPatch).GetMethod("CreateNodeImpl");
-        public static RedirectCallsState state;
-        /*private static MethodInfo createNode_prefix = typeof(NetToolPatch).GetMethod("CreateNode_prefix", BindingFlags.NonPublic);
-        private static MethodInfo createNode_postfix = typeof(NetToolPatch).GetMethod("CreateNode_postfix", BindingFlags.NonPublic);
-        private static MethodInfo createNode_patch = typeof(NetToolPatch).GetMethod("CreateNode_postfix", BindingFlags.NonPublic);
+        /*public static MethodInfo patch = typeof(NetToolPatch).GetMethod("CreateNodeImpl");
+        public static RedirectCallsState state;*/
+        private static MethodInfo createNode_prefix = typeof(NetToolPatch).GetMethod("CreateNode_prefix", BindingFlags.NonPublic | BindingFlags.Static);
+        private static MethodInfo createNode_postfix = typeof(NetToolPatch).GetMethod("CreateNode_postfix", BindingFlags.NonPublic | BindingFlags.Static);
 
         public static void Patch(HarmonyInstance _harmony)
         {
@@ -27,9 +27,9 @@ namespace UndoMod.Patches
         {
             _harmony.Unpatch(createNode_original, createNode_prefix);
             _harmony.Unpatch(createNode_original, createNode_postfix);
-        }*/
+        }
 
-        public static void Patch()
+        /*public static void Patch()
         {
             state = RedirectionHelper.RedirectCalls(NetToolPatch.createNode_original, patch);
         }
@@ -50,9 +50,9 @@ namespace UndoMod.Patches
 
             UndoMod.Instsance.EndObserving();
             return result;
-        }
+        }*/
 
-        /*private static void CreateNode_prefix()
+        private static void CreateNode_prefix()
         {
             UndoMod.Instsance.BeginObserving("Build roads");
         }
@@ -60,6 +60,6 @@ namespace UndoMod.Patches
         private static void CreateNode_postfix()
         {
             UndoMod.Instsance.EndObserving();
-        }*/
+        }
     }
 }
