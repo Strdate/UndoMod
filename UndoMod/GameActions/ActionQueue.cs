@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace UndoMod
+namespace UndoMod.GameActions
 {
-    public class Class1
+    public class ActionQueue
     {
     }
 }
