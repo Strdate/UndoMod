@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ColossalFramework;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,16 +11,25 @@ namespace SharedEnvironment
     {
         public string Name { get; set; }
 
-        public List<GameAction> Actions = new List<GameAction>();
+        public List<IGameAction> Actions = new List<IGameAction>();
+
+        public int DoCost { get; set; }
+
+        public delegate bool ExceptionHandler(IGameAction action, Exception exception);
+        public static ExceptionHandler exceptionHandler { get; set; }
 
         public ActionQueueItem(string name)
         {
             Name = name;
         }
 
-        public void Do()
+        public bool Do()
         {
-            foreach (GameAction action in Actions)
+            if (!HandleMoney(DoCost))
+            {
+                return false;
+            }
+            foreach (IGameAction action in Actions)
             {
                 try
                 {
@@ -28,13 +38,23 @@ namespace SharedEnvironment
                 catch (Exception e)
                 {
                     Debug.LogError(e);
+                    if(exceptionHandler != null)
+                    {
+                        if (!exceptionHandler.Invoke(action, e))
+                            break;
+                    }
                 }
             }
+            return true;
         }
 
-        public void Redo()
+        public bool Redo()
         {
-            foreach (GameAction action in Actions)
+            if (!HandleMoney(DoCost))
+            {
+                return false;
+            }
+            foreach (IGameAction action in Actions)
             {
                 try
                 {
@@ -43,12 +63,22 @@ namespace SharedEnvironment
                 catch (Exception e)
                 {
                     Debug.LogError(e);
+                    if (exceptionHandler != null)
+                    {
+                        if (!exceptionHandler.Invoke(action, e))
+                            break;
+                    }
                 }
             }
+            return true;
         }
 
-        public void Undo()
+        public bool Undo()
         {
+            if(!HandleMoney(-DoCost))
+            {
+                return false;
+            }
             for (int i = Actions.Count - 1; i >= 0; i--)
             {
                 try
@@ -58,8 +88,34 @@ namespace SharedEnvironment
                 catch (Exception e)
                 {
                     Debug.LogError(e);
+                    if (exceptionHandler != null)
+                    {
+                        if (!exceptionHandler.Invoke(Actions[i], e))
+                            break;
+                    }
                 }
             }
+            return true;
+        }
+
+        private bool HandleMoney(int amount)
+        {
+            if (amount == 0)
+                return true;
+            else if(amount < 0)
+            {
+                Singleton<EconomyManager>.instance.AddResource(EconomyManager.Resource.RefundAmount, -amount, PrefabCollection<NetInfo>.GetPrefab(0).m_class);
+                return true;
+            } else if(Singleton<EconomyManager>.instance.FetchResource(EconomyManager.Resource.Construction, amount, PrefabCollection<NetInfo>.GetPrefab(0).m_class) != amount)
+            {
+                return false;
+            }
+            return true;
+        }
+
+        public override string ToString()
+        {
+            return "[Action " + Name + "(" + Actions.Count + " ), cost: " +  DoCost + "]";
         }
     }
 }

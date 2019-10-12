@@ -44,13 +44,15 @@ namespace SharedEnvironment
 
         // methods
 
-        public override void Create()
+        public override bool Create()
         {
             if (!IsCreated())
             {
                 _id = ManagerUtils.CreateBuilding(_position, _angle, _buildingInfo);
                 Get.m_flags = _flags;
             }
+
+            return true;
         }
 
         public override bool Release()
@@ -80,11 +82,16 @@ namespace SharedEnvironment
 
         public WrappedBuilding(ushort id)
         {
-            if (id != 0 && ((ManagerUtils.BuildingS(id).m_flags & Building.Flags.Deleted) == Building.Flags.None))
+            if (id != 0 && !ManagerUtils.ExistsBuilding(id))
             {
                 throw new WrapperException("Cannot wrap nonexisting building");
             }
             _id = id;
+
+            _position = ManagerUtils.BuildingS(_id).m_position;
+            _angle = ManagerUtils.BuildingS(_id).m_angle;
+            _flags = ManagerUtils.BuildingS(_id).m_flags;
+            _buildingInfo = ManagerUtils.BuildingS(_id).Info;
         }
     }
 }

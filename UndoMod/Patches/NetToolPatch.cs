@@ -12,7 +12,7 @@ namespace UndoMod.Patches
     public class NetToolPatch
     {
         public static MethodInfo createNode_original = typeof(NetTool).GetMethod("CreateNodeImpl", BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[] { typeof(bool) }, null);
-        public static MethodInfo patch = typeof(NetToolPatch).GetMethod("CreateNodeImpl");
+        public static MethodInfo patch = typeof(NetToolPatch).GetMethod("CreateNodeImpl", BindingFlags.NonPublic | BindingFlags.Instance);
         public static RedirectCallsState state;
         /*private static MethodInfo createNode_prefix = typeof(NetToolPatch).GetMethod("CreateNode_prefix", BindingFlags.NonPublic);
         private static MethodInfo createNode_postfix = typeof(NetToolPatch).GetMethod("CreateNode_postfix", BindingFlags.NonPublic);
@@ -31,22 +31,34 @@ namespace UndoMod.Patches
 
         public static void Patch()
         {
-            state = RedirectionHelper.RedirectCalls(NetToolPatch.createNode_original, patch);
+            state = RedirectionHelper.RedirectCalls(createNode_original, patch);
         }
 
         public static void Unpatch()
         {
-            RedirectionHelper.RevertRedirect(NetToolPatch.createNode_original, state);
+            RedirectionHelper.RevertRedirect(createNode_original, state);
         }
 
-        public static bool CreateNodeImpl(bool switchDirection)
+        private bool CreateNodeImpl(bool switchDirection)
         {
-            Debug.Log("CreateNode detour");
+            //Debug.Log("CreateNode detour");
             UndoMod.Instsance.BeginObserving("Build roads");
+            bool result = false;
 
-            RedirectionHelper.RevertRedirect(NetToolPatch.createNode_original, state);
-            bool result = (bool) createNode_original.Invoke(ToolsModifierControl.GetTool<NetTool>(), new object[] { switchDirection });
-            state = RedirectionHelper.RedirectCalls(NetToolPatch.createNode_original, patch);
+            RedirectionHelper.RevertRedirect(createNode_original, state);
+            state = RedirectionHelper.RedirectCalls(patch, createNode_original);
+            try
+            {
+                //result = (bool)createNode_original.Invoke(ToolsModifierControl.GetTool<NetTool>(), new object[] { switchDirection });
+                result = CreateNodeImpl(switchDirection);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e);
+                UndoMod.Instsance.InvalidateAll();
+            }
+            RedirectionHelper.RevertRedirect(patch, state);
+            state = RedirectionHelper.RedirectCalls(createNode_original, patch);
 
             UndoMod.Instsance.EndObserving();
             return result;

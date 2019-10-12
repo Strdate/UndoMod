@@ -19,7 +19,14 @@ namespace UndoMod
             {
                 if(!_processed)
                 {
-                    UndoMod.Instsance.UndoLast();
+                    UndoMod.Instsance.Undo();
+                    _processed = true;
+                }
+            } else if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKey(KeyCode.Y))
+            {
+                if (!_processed)
+                {
+                    UndoMod.Instsance.Redo();
                     _processed = true;
                 }
             } else

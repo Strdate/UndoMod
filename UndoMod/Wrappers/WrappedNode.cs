@@ -30,12 +30,14 @@ namespace SharedEnvironment
 
         // methods
 
-        public override void Create()
+        public override bool Create()
         {
             if(!IsCreated())
             {
                 _id = NetUtil.CreateNode( NetUtil.NetinfoFromIndex(_netInfoIndex) , _position);
             }
+
+            return true;
         }
 
         public override bool Release()
@@ -56,6 +58,11 @@ namespace SharedEnvironment
             return true; // ?? true or false
         }
 
+        public override string ToString()
+        {
+            return "[WNODE created:" + IsCreated() + ", id:" + _id + ", pos:" + Position + ", info:" + NetInfo + (IsCreated() ? ", flags: " + Get.m_flags : "") + "]";
+        }
+
         // Constructors
 
         public WrappedNode() { }
@@ -67,6 +74,9 @@ namespace SharedEnvironment
                 throw new WrapperException("Cannot wrap nonexisting node");
             }
             _id = id;
+
+            _position = NetUtil.Node(_id).m_position;
+            _netInfoIndex = NetUtil.Node(_id).m_infoIndex;
         }
     }
 }

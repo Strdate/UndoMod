@@ -1,5 +1,7 @@
 ﻿using ColossalFramework.Math;
 using Redirection;
+using SharedEnvironment;
+using System;
 using System.Reflection;
 using UndoMod.Utils;
 using UnityEngine;
@@ -8,12 +10,13 @@ namespace UndoMod.Patches
 {
     public class NetManagerPatch
     {
-        private static MethodInfo releaseSegment_original = typeof(NetManager).GetMethod("ReleaseSegment");
-        private static MethodInfo releaseSegment_prefix = typeof(NetManagerPatch).GetMethod("ReleaseSegment", BindingFlags.NonPublic | BindingFlags.Instance);
+        private static MethodInfo releaseSegment_original = typeof(NetManager).GetMethod("PreReleaseSegmentImplementation", BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[] { typeof(ushort), typeof(NetSegment).MakeByRefType(), typeof(bool) }, null);
+        private static MethodInfo releaseSegment_prefix = typeof(NetManagerPatch).GetMethod("PreReleaseSegmentImplementation", BindingFlags.NonPublic | BindingFlags.Instance);
         public static RedirectCallsState releaseSegmentState;
 
-        private static MethodInfo releaseNode_original = typeof(NetManager).GetMethod("ReleaseNode");
-        private static MethodInfo releaseNode_prefix = typeof(NetManagerPatch).GetMethod("ReleaseNode", BindingFlags.NonPublic | BindingFlags.Instance);
+        //private static MethodInfo releaseNode_original = typeof(NetManager).GetMethod("ReleaseNode");
+        private static MethodInfo releaseNode_original = typeof(NetManager).GetMethod("PreReleaseNodeImplementation", BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[] { typeof(ushort), typeof(NetNode).MakeByRefType(), typeof(bool), typeof(bool)}, null);
+        private static MethodInfo releaseNode_prefix = typeof(NetManagerPatch).GetMethod("PreReleaseNodeImplementation", BindingFlags.NonPublic | BindingFlags.Instance);
         public static RedirectCallsState releaseNodeState;
 
         private static MethodInfo createSegment_original = typeof(NetManager).GetMethod("CreateSegment");
@@ -42,49 +45,123 @@ namespace UndoMod.Patches
             RedirectionHelper.RevertRedirect(createNode_original, createNodeState);
         }
 
-        private void ReleaseSegment(ushort segment, bool keepNodes)
+        private bool CheckIfObserving()
         {
-            Debug.Log("redirect");
-            if ((NetUtil.Segment(segment).m_flags != NetSegment.Flags.None) && !UndoMod.Instsance.PerformingAction && (UndoMod.Instsance.ObservedItem != null))
+            return !UndoMod.Instsance.PerformingAction && !UndoMod.Instsance.Invalidated && !UndoMod.Instsance.ObservingOnlyBuildings;
+        }
+
+        private void PreReleaseSegmentImplementation(ushort segment, ref NetSegment data, bool keepNodes)
+        {
+            //Debug.Log("redirect");
+            if ((NetUtil.Segment(segment).m_flags != NetSegment.Flags.None) && CheckIfObserving())
             {
-                var action = UndoMod.Instsance.WrappersDictionary.RegisterSegment(segment);
-                action.IsBuildAction = false;
-                action.ForceSetId(0);
-                UndoMod.Instsance.ObservedItem.Actions.Add(action);
+                if(UndoMod.Instsance.Observing)
+                {
+                    try
+                    {
+                        var constructable = UndoMod.Instsance.WrappersDictionary.RegisterSegment(segment);
+                        constructable.ForceSetId(0);
+                        UndoMod.Instsance.ReportObservedAction(new ActionRelease(constructable));
+                    } catch(Exception e)
+                    {
+                        Debug.Log(e);
+                        UndoMod.Instsance.InvalidateAll();
+                    }
+                }
+                else
+                {
+                    Invalidator.Instance.InvalidSegments.Add(segment);
+                }
             }
 
             RedirectionHelper.RevertRedirect(releaseSegment_original, releaseSegmentState);
-            NetManager.instance.ReleaseSegment(segment, keepNodes);
+            releaseSegmentState = RedirectionHelper.RedirectCalls(releaseSegment_prefix, releaseSegment_original);
+            PreReleaseSegmentImplementation(segment, ref data, keepNodes);
+            RedirectionHelper.RevertRedirect(releaseSegment_prefix, releaseSegmentState);
             releaseSegmentState = RedirectionHelper.RedirectCalls(releaseSegment_original, releaseSegment_prefix);
         }
 
-        private void ReleaseNode(ushort node)
+        // semi stock code
+        private bool PreReleaseNodeImplementation_check(ushort node, ref NetNode data, bool checkDeleted, bool checkTouchable)
         {
-            Debug.Log("redirect");
-            if ((NetUtil.Node(node).m_flags != NetNode.Flags.None) && !UndoMod.Instsance.PerformingAction && (UndoMod.Instsance.ObservedItem != null))
+            if (checkTouchable && (data.m_flags & NetNode.Flags.Untouchable) != NetNode.Flags.None)
             {
-                var action = UndoMod.Instsance.WrappersDictionary.RegisterNode(node);
-                action.IsBuildAction = false;
-                action.ForceSetId(0);
-                UndoMod.Instsance.ObservedItem.Actions.Add(action);
+                return false;
+            }
+            if (checkDeleted)
+            {
+                for (int i = 0; i < 8; i++)
+                {
+                    ushort segment = data.GetSegment(i);
+                    if (segment != 0 && (NetUtil.Segment(segment).m_flags & NetSegment.Flags.Deleted) == NetSegment.Flags.None)
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        private void PreReleaseNodeImplementation(ushort node, ref NetNode data, bool checkDeleted, bool checkTouchable)
+        {
+            //Debug.Log("redirect");
+            if ((NetUtil.Node(node).m_flags != NetNode.Flags.None) && CheckIfObserving() && PreReleaseNodeImplementation_check(node, ref data, checkDeleted, checkTouchable))
+            {
+                if (UndoMod.Instsance.Observing)
+                {
+                    try
+                    {
+                        var constructable = UndoMod.Instsance.WrappersDictionary.RegisterNode(node);
+                        constructable.ForceSetId(0);
+                        UndoMod.Instsance.ReportObservedAction(new ActionRelease(constructable));
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.Log(e);
+                        UndoMod.Instsance.InvalidateAll();
+                    }
+                }
+                else
+                {
+                    Invalidator.Instance.InvalidNodes.Add(node);
+                }
             }
 
             RedirectionHelper.RevertRedirect(releaseNode_original, releaseNodeState);
-            NetManager.instance.ReleaseNode(node);
+            releaseNodeState = RedirectionHelper.RedirectCalls(releaseNode_prefix, releaseNode_original);
+
+            PreReleaseNodeImplementation(node, ref data, checkDeleted, checkTouchable);
+
+            RedirectionHelper.RevertRedirect(releaseNode_prefix, releaseNodeState);
             releaseNodeState = RedirectionHelper.RedirectCalls(releaseNode_original, releaseNode_prefix);
         }
 
         private bool CreateSegment(out ushort segment, ref Randomizer randomizer, NetInfo info, ushort startNode, ushort endNode, Vector3 startDirection, Vector3 endDirection, uint buildIndex, uint modifiedIndex, bool invert)
         {
-            Debug.Log("redirect");
+            //Debug.Log("redirect");
             RedirectionHelper.RevertRedirect(createSegment_original, createSegmentState);
             bool result = NetManager.instance.CreateSegment(out segment, ref randomizer, info, startNode, endNode, startDirection, endDirection, buildIndex, modifiedIndex, invert);
             createSegmentState = RedirectionHelper.RedirectCalls(createSegment_original, createSegment_postfix);
 
-            if (result && !UndoMod.Instsance.PerformingAction && (UndoMod.Instsance.ObservedItem != null))
+            if (result && CheckIfObserving())
             {
-                var action = UndoMod.Instsance.WrappersDictionary.RegisterSegment(segment);
-                UndoMod.Instsance.ObservedItem.Actions.Add(action);
+                if (UndoMod.Instsance.Observing)
+                {
+                    try
+                    {
+                        var constructable = UndoMod.Instsance.WrappersDictionary.RegisterSegment(segment);
+                        UndoMod.Instsance.ReportObservedAction(new ActionCreate(constructable));
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.Log(e);
+                        UndoMod.Instsance.InvalidateAll();
+                    }
+                }
+                else
+                {
+                    Invalidator.Instance.InvalidSegments.Add(segment);
+                }
             }
 
             return result;
@@ -92,15 +169,30 @@ namespace UndoMod.Patches
 
         private bool CreateNode(out ushort node, ref Randomizer randomizer, NetInfo info, Vector3 position, uint buildIndex)
         {
-            Debug.Log("redirect");
+            //Debug.Log("redirect");
             RedirectionHelper.RevertRedirect(createNode_original, createNodeState);
             bool result = NetManager.instance.CreateNode(out node, ref randomizer, info, position, buildIndex);
             createNodeState = RedirectionHelper.RedirectCalls(createNode_original, createNode_postfix);
 
-            if (result && !UndoMod.Instsance.PerformingAction && (UndoMod.Instsance.ObservedItem != null))
+            if (result && CheckIfObserving())
             {
-                var action = UndoMod.Instsance.WrappersDictionary.RegisterNode(node);
-                UndoMod.Instsance.ObservedItem.Actions.Add(action);
+                if (UndoMod.Instsance.Observing)
+                {
+                    try
+                    {
+                        var constructable = UndoMod.Instsance.WrappersDictionary.RegisterNode(node);
+                        UndoMod.Instsance.ReportObservedAction(new ActionCreate(constructable));
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.Log(e);
+                        UndoMod.Instsance.InvalidateAll();
+                    }
+                }
+                else
+                {
+                    Invalidator.Instance.InvalidNodes.Add(node);
+                }
             }
 
             return result;

@@ -32,10 +32,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="0Harmony, Version=1.2.0.1, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>C:\Users\stard\AppData\Local\Colossal Order\Cities_Skylines\Addons\Mods\UndoMod\0Harmony.dll</HintPath>
-    </Reference>
     <Reference Include="Assembly-CSharp">
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Cities_Skylines\Cities_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
@@ -56,14 +52,23 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="GameActions\AbstractAction.cs" />
+    <Compile Include="GameActions\IGameAction.cs" />
     <Compile Include="GameActions\ActionQueue.cs" />
     <Compile Include="GameActions\ActionQueueItem.cs" />
+    <Compile Include="GameActions\ConstructionActions.cs" />
     <Compile Include="GameActions\IActionQueueItem.cs" />
+    <Compile Include="Invalidator.cs" />
     <Compile Include="LoadingExtension.cs" />
     <Compile Include="ModInfo.cs" />
+    <Compile Include="Patches\BuildingManagerPatch.cs" />
+    <Compile Include="Patches\BuildingToolPatch.cs" />
+    <Compile Include="Patches\BulldozeToolPatch.cs" />
     <Compile Include="Patches\NetManagerPatch.cs" />
     <Compile Include="Patches\NetToolPatch.cs" />
+    <Compile Include="Patches\PropManagerPatch.cs" />
+    <Compile Include="Patches\PropToolPatch.cs" />
+    <Compile Include="Patches\TreeManagerPatch.cs" />
+    <Compile Include="Patches\TreeToolPatch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Redirection\RedirectionHelper.cs" />
     <Compile Include="Redirection\RedirectionUtil.cs" />
@@ -77,6 +82,7 @@
     <Compile Include="Utils\ManagerUtils.cs" />
     <Compile Include="Utils\NetUtil.cs" />
     <Compile Include="Wrappers\AbstractWrapper.cs" />
+    <Compile Include="Wrappers\IConstructable.cs" />
     <Compile Include="Wrappers\WrappedBuilding.cs" />
     <Compile Include="Wrappers\WrappedNode.cs" />
     <Compile Include="Wrappers\WrappedProp.cs" />

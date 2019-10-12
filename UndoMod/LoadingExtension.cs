@@ -39,8 +39,15 @@ namespace UndoMod
             /*NetToolPatch.Patch(_harmony);
             NetManagerPatch.Patch(_harmony);*/
 
+            BulldozeToolPatch.Patch();
+            TreeToolPatch.Patch();
+            PropToolPatch.Patch();
             NetToolPatch.Patch();
+            BuildingToolPatch.Patch();
+            TreeManagerPatch.Patch();
+            PropManagerPatch.Patch();
             NetManagerPatch.Patch();
+            BuildingManagerPatch.Patch();
             //Redirector<NetTool>.Deploy();
             //Redirector<NetManagerPatch>.Deploy();
 
@@ -49,8 +56,15 @@ namespace UndoMod
 
         public void OnLevelUnloading()
         {
+            BuildingManagerPatch.Unpatch();
             NetManagerPatch.Unpatch();
+            PropManagerPatch.Unpatch();
+            BuildingToolPatch.Unpatch();
+            TreeManagerPatch.Unpatch();
             NetToolPatch.Unpatch();
+            PropToolPatch.Unpatch();
+            TreeToolPatch.Unpatch();
+            BulldozeToolPatch.Unpatch();
             /*NetManagerPatch.Unpatch(_harmony);
             NetToolPatch.Unpatch(_harmony);*/
 

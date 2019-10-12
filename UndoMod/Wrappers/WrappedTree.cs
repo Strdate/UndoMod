@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace SharedEnvironment
 {
-    public class WrappedTree : GameAction
+    public class WrappedTree : IConstructable
     {
         private Vector3 _position;
         public Vector3 Position
@@ -23,11 +23,30 @@ namespace SharedEnvironment
             set => _treeInfo = IsCreated() ? throw new WrapperException("Cannot modify built tree") : value;
         }
 
-        private bool _single;
+        private ushort _flags;
+        public ushort Flags
+        {
+            get => IsCreated() ? ManagerUtils.Tree(_id).m_flags : _flags;
+            set => _flags = IsCreated() ? throw new WrapperException("Cannot modify built tree") : value;
+        }
+
         public bool Single
         {
-            get => IsCreated() ? ManagerUtils.Tree(_id).Single : _single;
-            set => _single = IsCreated() ? throw new WrapperException("Cannot modify built tree") : value;
+            get
+            {
+                return (Flags & 16) != 0;
+            }
+            set
+            {
+                if (value)
+                {
+                    Flags |= 16;
+                }
+                else
+                {
+                    Flags = (ushort)((int)Flags & -17);
+                }
+            }
         }
 
         public ref TreeInstance Get
@@ -37,12 +56,15 @@ namespace SharedEnvironment
 
         // methods
 
-        public /*override*/ void Create()
+        public /*override*/ bool Create()
         {
             if (!IsCreated())
             {
-                _id = ManagerUtils.CreateTree(_position, _treeInfo, _single);
+                _id = ManagerUtils.CreateTree(_position, _treeInfo, Single);
+                Get.m_flags = _flags;
             }
+
+            return true;
         }
 
         public /*override*/ bool Release()
@@ -50,7 +72,7 @@ namespace SharedEnvironment
             if (IsCreated())
             {
                 _position = ManagerUtils.Tree(_id).Position;
-                _single = ManagerUtils.Tree(_id).Single;
+                _flags = ManagerUtils.Tree(_id).m_flags;
                 _treeInfo = ManagerUtils.Tree(_id).Info;
 
                 ManagerUtils.ReleaseTree(_id);
@@ -65,46 +87,25 @@ namespace SharedEnvironment
             return true;
         }
 
+        // TODO!!
+        public int ConstructionCost()
+        {
+            return 0;
+        }
+
         //
 
         protected uint _id;
         public uint Id { get => _id == 0 ? throw new WrapperException("Tree is not created") : _id; }
-
-        protected bool _isBuildAction = true;
-        public bool IsBuildAction { get => _isBuildAction; set => _isBuildAction = value; }
 
         public bool IsCreated()
         {
             return _id != 0;
         }
 
-        public override void Do()
+        public void ForceSetId(uint id)
         {
-            if (_isBuildAction)
-            {
-                Create();
-            }
-            else
-            {
-                Release();
-            }
-        }
-
-        public override void Undo()
-        {
-            if (_isBuildAction)
-            {
-                Release();
-            }
-            else
-            {
-                Create();
-            }
-        }
-
-        public override void Redo()
-        {
-            Do();
+            _id = id;
         }
 
         // Constructors
@@ -118,6 +119,10 @@ namespace SharedEnvironment
                 throw new WrapperException("Cannot wrap nonexisting tree");
             }
             _id = id;
+
+            _position = ManagerUtils.Tree(_id).Position;
+            _flags = ManagerUtils.Tree(_id).m_flags;
+            _treeInfo = ManagerUtils.Tree(_id).Info;
         }
     }
 }

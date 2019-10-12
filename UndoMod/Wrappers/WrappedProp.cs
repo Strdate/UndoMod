@@ -30,11 +30,30 @@ namespace SharedEnvironment
             set => _angle = IsCreated() ? throw new WrapperException("Cannot modify built prop") : value;
         }
 
-        private bool _single;
+        private ushort _flags;
+        public ushort Flags
+        {
+            get => IsCreated() ? ManagerUtils.Tree(_id).m_flags : _flags;
+            set => _flags = IsCreated() ? throw new WrapperException("Cannot modify built tree") : value;
+        }
+
         public bool Single
         {
-            get => IsCreated() ? ManagerUtils.Prop(_id).Single : _single;
-            set => _single = IsCreated() ? throw new WrapperException("Cannot modify built prop") : value;
+            get
+            {
+                return (Flags & 16) != 0;
+            }
+            set
+            {
+                if (value)
+                {
+                    Flags |= 16;
+                }
+                else
+                {
+                    Flags = (ushort)((int)Flags & -17);
+                }
+            }
         }
 
         public ref PropInstance Get
@@ -44,12 +63,15 @@ namespace SharedEnvironment
 
         // methods
 
-        public override void Create()
+        public override bool Create()
         {
             if (!IsCreated())
             {
-                _id = ManagerUtils.CreateProp(_position, _angle, _propInfo, _single);
+                _id = ManagerUtils.CreateProp(_position, _angle, _propInfo, Single);
+                Get.m_flags = _flags;
             }
+
+            return true;
         }
 
         public override bool Release()
@@ -58,7 +80,7 @@ namespace SharedEnvironment
             {
                 _position = ManagerUtils.Prop(_id).Position;
                 _angle = ManagerUtils.Prop(_id).m_angle;
-                _single = ManagerUtils.Prop(_id).Single;
+                _flags = ManagerUtils.Prop(_id).m_flags;
                 _propInfo = ManagerUtils.Prop(_id).Info;
 
                 ManagerUtils.ReleaseProp(_id);
@@ -84,6 +106,11 @@ namespace SharedEnvironment
                 throw new WrapperException("Cannot wrap nonexisting prop");
             }
             _id = id;
+
+            _position = ManagerUtils.Prop(_id).Position;
+            _angle = ManagerUtils.Prop(_id).m_angle;
+            _flags = ManagerUtils.Prop(_id).m_flags;
+            _propInfo = ManagerUtils.Prop(_id).Info;
         }
     }
 }

@@ -5,12 +5,10 @@ using System.Text;
 
 namespace SharedEnvironment
 {
-    public interface IActionQueueItem
+    public interface IConstructable
     {
-        string Name { get; }
-
-        bool Do();
-        bool Undo();
-        bool Redo();
+        bool Create();
+        bool Release();
+        int ConstructionCost();
     }
 }

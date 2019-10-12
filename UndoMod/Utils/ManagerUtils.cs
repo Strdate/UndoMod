@@ -92,6 +92,12 @@ namespace UndoMod.Utils
             }
         }
 
+        public static bool ExistsBuilding(ushort id)
+        {
+            ref Building data = ref BuildingS(id);
+            return data.m_flags != Building.Flags.None && (data.m_flags & Building.Flags.Deleted) == Building.Flags.None;
+        }
+
         public static ref Building BuildingS(ushort id)
         {
             return ref BuildingManager.m_buildings.m_buffer[id];

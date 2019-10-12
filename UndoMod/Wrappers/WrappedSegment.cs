@@ -74,12 +74,14 @@ namespace SharedEnvironment
 
         // methods
 
-        public override void Create()
+        public override bool Create()
         {
             if (!IsCreated())
             {
-                _id = NetUtil.CreateSegment(_startNode.Id, _endNode.Id, _startDir, _endDir, NetUtil.NetinfoFromIndex(_netInfoIndex), _invert, _switchStartAndEnd, _deployPlacementEffects);
+                _id = NetUtil.CreateSegment(_startNode.Id, _endNode.Id, _startDir, _endDir, NetInfo, _invert, _switchStartAndEnd, _deployPlacementEffects);
             }
+
+            return true;
         }
 
         public override bool Release()
@@ -112,14 +114,14 @@ namespace SharedEnvironment
             return NetInfo.m_netAI.GetConstructionCost(StartNode.Position, EndNode.Position, height1, height2);
         }
 
-        public override int DoCost()
+        public override int ConstructionCost()
         {
-            return _isBuildAction ? ComputeConstructionCost() : - ComputeConstructionCost() * 3 / 4;
+            return ComputeConstructionCost();
         }
 
-        public override int UndoCost()
+        public override string ToString()
         {
-            return _isBuildAction ? - ComputeConstructionCost() : ComputeConstructionCost() * 3 / 4;
+            return "[WSEGMENT created:" + IsCreated() + ", id:" + _id + ", info:" + NetInfo + " {" + _startNode + ", " + _endNode + "}]";
         }
 
         // Constructors
@@ -133,18 +135,22 @@ namespace SharedEnvironment
                 throw new WrapperException("Cannot wrap nonexisting segment");
             }
 
-            if(NetUtil.Segment(id).m_startNode != startNode.Id || NetUtil.Segment(id).m_endNode != endNode.Id)
+            /*if(NetUtil.Segment(id).m_startNode != startNode.Id || NetUtil.Segment(id).m_endNode != endNode.Id)
             {
                 throw new WrapperException("Cannot wrap segment - Nodes do not match");
-            }
+            }*/
+            _id = id;
+
+            _startDir = NetUtil.Segment(_id).m_startDirection;
+            _endDir = NetUtil.Segment(_id).m_endDirection;
+            _netInfoIndex = NetUtil.Segment(_id).m_infoIndex;
+            _invert = (NetUtil.Segment(_id).m_flags & NetSegment.Flags.Invert) != NetSegment.Flags.None;
 
             _startNode = startNode;
             _endNode = endNode;
 
             _switchStartAndEnd = false;
             _deployPlacementEffects = false;
-
-            _id = id;
         }
     }
 }

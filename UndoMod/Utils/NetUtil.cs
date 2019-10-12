@@ -87,10 +87,10 @@ namespace UndoMod.Utils
         {
             var randomizer = Singleton<SimulationManager>.instance.m_randomizer;
 
-            NetNode startNode = Node(startNodeId);
-            NetNode endNode = Node(endNodeId);
+            ref NetNode startNode = ref Node(startNodeId);
+            ref NetNode endNode = ref Node(endNodeId);
 
-            if ((startNode.m_flags & NetNode.Flags.Created) == NetNode.Flags.None || (endNode.m_flags & NetNode.Flags.Created) == NetNode.Flags.None)
+            if (((startNode.m_flags & NetNode.Flags.Created) == NetNode.Flags.None) || ((endNode.m_flags & NetNode.Flags.Created) == NetNode.Flags.None))
                 throw new Exception("Failed to create NetSegment: Invalid node(s)");
 
             var result = NetManager.instance.CreateSegment(out ushort newSegmentId, ref randomizer, netInfo, switchStartAndEnd ? endNodeId : startNodeId,
