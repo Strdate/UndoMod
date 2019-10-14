@@ -33,7 +33,7 @@ namespace UndoMod.Patches
 
         private bool CheckIfObserving()
         {
-            return !UndoMod.Instsance.PerformingAction && !UndoMod.Instsance.Invalidated && !UndoMod.Instsance.ObservingOnlyBuildings;
+            return !UndoMod.Instsance.PerformingAction && !UndoMod.Instsance.Invalidated && UndoMod.Instsance.ObservingOnlyBuildings == 0;
         }
 
         private void ReleaseTree(uint tree)
@@ -58,21 +58,34 @@ namespace UndoMod.Patches
                 }
                 else
                 {
-                    Invalidator.Instance.InvalidTrees.Add(tree);
+                    //Invalidator.Instance.InvalidTrees.Add(tree);
                 }
             }
 
             RedirectionHelper.RevertRedirect(releaseTree_original, releaseTreeState);
-            TreeManager.instance.ReleaseTree(tree);
-            releaseTreeState = RedirectionHelper.RedirectCalls(releaseTree_original, releaseTree_patch);
+            try
+            {
+                TreeManager.instance.ReleaseTree(tree);
+            }
+            finally
+            {
+                releaseTreeState = RedirectionHelper.RedirectCalls(releaseTree_original, releaseTree_patch);
+            }
         }
 
         private bool CreateTree(out uint tree, ref Randomizer randomizer, TreeInfo info, Vector3 position, bool single)
         {
             //Debug.Log("redirect");
+            bool result;
             RedirectionHelper.RevertRedirect(createTree_original, createTreeState);
-            bool result = TreeManager.instance.CreateTree(out tree, ref randomizer, info, position, single);
-            createTreeState = RedirectionHelper.RedirectCalls(createTree_original, createTree_patch);
+            try
+            {
+                result = TreeManager.instance.CreateTree(out tree, ref randomizer, info, position, single);
+            }
+            finally
+            {
+                createTreeState = RedirectionHelper.RedirectCalls(createTree_original, createTree_patch);
+            }
 
             if (result && CheckIfObserving())
             {
@@ -91,7 +104,7 @@ namespace UndoMod.Patches
                 }
                 else
                 {
-                    Invalidator.Instance.InvalidTrees.Add(tree);
+                    //Invalidator.Instance.InvalidTrees.Add(tree);
                 }
             }
 

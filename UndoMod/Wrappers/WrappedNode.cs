@@ -44,8 +44,7 @@ namespace SharedEnvironment
         {
             if(IsCreated())
             {
-                _position = NetUtil.Node(_id).m_position;
-                _netInfoIndex = NetUtil.Node(_id).m_infoIndex;
+                UpdateData();
 
                 NetUtil.ReleaseNode(_id);
                 if(!NetUtil.ExistsNode(_id))
@@ -63,6 +62,12 @@ namespace SharedEnvironment
             return "[WNODE created:" + IsCreated() + ", id:" + _id + ", pos:" + Position + ", info:" + NetInfo + (IsCreated() ? ", flags: " + Get.m_flags : "") + "]";
         }
 
+        protected override void UpdateData()
+        {
+            _position = NetUtil.Node(_id).m_position;
+            _netInfoIndex = NetUtil.Node(_id).m_infoIndex;
+        }
+
         // Constructors
 
         public WrappedNode() { }
@@ -75,8 +80,7 @@ namespace SharedEnvironment
             }
             _id = id;
 
-            _position = NetUtil.Node(_id).m_position;
-            _netInfoIndex = NetUtil.Node(_id).m_infoIndex;
+            UpdateData();
         }
     }
 }

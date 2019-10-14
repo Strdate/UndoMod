@@ -13,20 +13,24 @@ namespace UndoMod
     {
         private static bool _processed = false;
 
+        private static DateTime _lastBeginObserving = DateTime.Now;
+
         public override void OnUpdate(float realTimeDelta, float simulationTimeDelta)
         {
-            if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKey(KeyCode.Z))
+            if (ModInfo.sc_undo.IsPressed())
             {
                 if(!_processed)
                 {
-                    UndoMod.Instsance.Undo();
+                    if(CheckCurrentTool())
+                        UndoMod.Instsance.Undo();
                     _processed = true;
                 }
-            } else if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKey(KeyCode.Y))
+            } else if (ModInfo.sc_redo.IsPressed())
             {
                 if (!_processed)
                 {
-                    UndoMod.Instsance.Redo();
+                    if (CheckCurrentTool())
+                        UndoMod.Instsance.Redo();
                     _processed = true;
                 }
             } else
@@ -34,7 +38,40 @@ namespace UndoMod
                 _processed = false;
             }
 
+            ScheduledObserving();
+        }
 
+        private bool CheckCurrentTool()
+        {
+            if(!ModInfo.sa_disableShortcuts.value)
+            {
+                return true;
+            }
+
+            ToolBase tool = ToolsModifierControl.toolController.CurrentTool;
+            string toolName = tool.GetType().Name;
+            if (
+                tool is DefaultTool ||
+                tool is NetTool ||
+                tool is BuildingTool ||
+                tool is PropTool ||
+                tool is TreeTool ||
+                toolName == "ForestTool")
+            { return true; }
+
+            return false;
+        }
+
+        private static void ScheduledObserving()
+        {
+            if(LoadingExtension.Instsance.m_detoured)
+            {
+                if(_lastBeginObserving.AddSeconds(1) < DateTime.Now)
+                {
+                    _lastBeginObserving = DateTime.Now;
+                    UndoMod.Instsance.BeginObserving("<unknown>", null, true);
+                }
+            }
         }
     }
 }

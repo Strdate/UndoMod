@@ -18,6 +18,11 @@ namespace SharedEnvironment
             _queue = new IActionQueueItem[length];
         }
 
+        public int Length()
+        {
+            return _queue.Length;
+        }
+
         public void Push(IActionQueueItem item)
         {
             _pointer++;

@@ -10,6 +10,9 @@ namespace SharedEnvironment
     public class ActionQueueItem : IActionQueueItem
     {
         public string Name { get; set; }
+        public string ModName { get; set; }
+
+        public bool AutoObserving { get; set; }
 
         public List<IGameAction> Actions = new List<IGameAction>();
 
@@ -115,7 +118,7 @@ namespace SharedEnvironment
 
         public override string ToString()
         {
-            return "[Action " + Name + "(" + Actions.Count + " ), cost: " +  DoCost + "]";
+            return "[Action " + Name + (ModName != null ? "(" + ModName + ")" : "") + ", count: " + Actions.Count + ", cost: " +  DoCost + "]";
         }
     }
 }

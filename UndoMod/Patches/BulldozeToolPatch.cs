@@ -77,7 +77,7 @@ namespace UndoMod.Patches
         {
             var patch = patches[0];
 
-            UndoMod.Instsance.BeginObserving("Remove segment");
+            UndoMod.Instsance.BeginObserving("Remove segment", "Vanilla");
             patch.Swap();
             DeleteSegmentImpl(segment);
             patch.Unswap();
@@ -88,7 +88,7 @@ namespace UndoMod.Patches
         {
             var patch = patches[1];
 
-            UndoMod.Instsance.BeginObserving("Remove node");
+            UndoMod.Instsance.BeginObserving("Remove node", "Vanilla");
             patch.Swap();
             DeleteNodeImpl(node);
             patch.Unswap();
@@ -99,7 +99,7 @@ namespace UndoMod.Patches
         {
             var patch = patches[2];
 
-            UndoMod.Instsance.BeginObserving("Remove building", true);
+            UndoMod.Instsance.BeginObserving("Remove building"/*, true*/, "Vanilla");
             patch.Swap();
             DeleteBuildingImpl(building);
             patch.Unswap();
@@ -110,7 +110,7 @@ namespace UndoMod.Patches
         {
             var patch = patches[3];
 
-            UndoMod.Instsance.BeginObserving("Remove tree");
+            UndoMod.Instsance.BeginObserving("Remove tree", "Vanilla");
             patch.Swap();
             DeleteTreeImpl(tree);
             patch.Unswap();
@@ -121,7 +121,7 @@ namespace UndoMod.Patches
         {
             var patch = patches[4];
 
-            UndoMod.Instsance.BeginObserving("Remove prop");
+            UndoMod.Instsance.BeginObserving("Remove prop", "Vanilla");
             patch.Swap();
             DeletePropImpl(prop);
             patch.Unswap();

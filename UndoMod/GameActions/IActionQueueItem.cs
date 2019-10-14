@@ -8,6 +8,7 @@ namespace SharedEnvironment
     public interface IActionQueueItem
     {
         string Name { get; }
+        string ModName { get; }
 
         bool Do();
         bool Undo();

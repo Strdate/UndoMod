@@ -32,6 +32,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="0Harmony">
+      <HintPath>C:\Users\stard\AppData\Local\Colossal Order\Cities_Skylines\Addons\Mods\UndoMod\0Harmony.dll</HintPath>
+    </Reference>
     <Reference Include="Assembly-CSharp">
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Cities_Skylines\Cities_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
@@ -57,7 +60,6 @@
     <Compile Include="GameActions\ActionQueueItem.cs" />
     <Compile Include="GameActions\ConstructionActions.cs" />
     <Compile Include="GameActions\IActionQueueItem.cs" />
-    <Compile Include="Invalidator.cs" />
     <Compile Include="LoadingExtension.cs" />
     <Compile Include="ModInfo.cs" />
     <Compile Include="Patches\BuildingManagerPatch.cs" />
@@ -78,6 +80,7 @@
     <Compile Include="Redirection\TargetTypeAttribute.cs" />
     <Compile Include="Redirection\Tuple.cs" />
     <Compile Include="Threading.cs" />
+    <Compile Include="UI\KeyMappings.cs" />
     <Compile Include="UndoMod.cs" />
     <Compile Include="Utils\ManagerUtils.cs" />
     <Compile Include="Utils\NetUtil.cs" />

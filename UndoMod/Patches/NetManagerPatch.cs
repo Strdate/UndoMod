@@ -47,7 +47,7 @@ namespace UndoMod.Patches
 
         private bool CheckIfObserving()
         {
-            return !UndoMod.Instsance.PerformingAction && !UndoMod.Instsance.Invalidated && !UndoMod.Instsance.ObservingOnlyBuildings;
+            return !UndoMod.Instsance.PerformingAction && !UndoMod.Instsance.Invalidated && UndoMod.Instsance.ObservingOnlyBuildings == 0;
         }
 
         private void PreReleaseSegmentImplementation(ushort segment, ref NetSegment data, bool keepNodes)
@@ -70,15 +70,21 @@ namespace UndoMod.Patches
                 }
                 else
                 {
-                    Invalidator.Instance.InvalidSegments.Add(segment);
+                    //Invalidator.Instance.InvalidSegments.Add(segment);
                 }
             }
 
             RedirectionHelper.RevertRedirect(releaseSegment_original, releaseSegmentState);
             releaseSegmentState = RedirectionHelper.RedirectCalls(releaseSegment_prefix, releaseSegment_original);
-            PreReleaseSegmentImplementation(segment, ref data, keepNodes);
-            RedirectionHelper.RevertRedirect(releaseSegment_prefix, releaseSegmentState);
-            releaseSegmentState = RedirectionHelper.RedirectCalls(releaseSegment_original, releaseSegment_prefix);
+            try
+            {
+                PreReleaseSegmentImplementation(segment, ref data, keepNodes);
+            }
+            finally
+            {
+                RedirectionHelper.RevertRedirect(releaseSegment_prefix, releaseSegmentState);
+                releaseSegmentState = RedirectionHelper.RedirectCalls(releaseSegment_original, releaseSegment_prefix);
+            }
         }
 
         // semi stock code
@@ -105,15 +111,16 @@ namespace UndoMod.Patches
         private void PreReleaseNodeImplementation(ushort node, ref NetNode data, bool checkDeleted, bool checkTouchable)
         {
             //Debug.Log("redirect");
+            WrappedNode constructable = null;
             if ((NetUtil.Node(node).m_flags != NetNode.Flags.None) && CheckIfObserving() && PreReleaseNodeImplementation_check(node, ref data, checkDeleted, checkTouchable))
             {
                 if (UndoMod.Instsance.Observing)
                 {
                     try
                     {
-                        var constructable = UndoMod.Instsance.WrappersDictionary.RegisterNode(node);
+                        constructable = UndoMod.Instsance.WrappersDictionary.RegisterNode(node);
                         constructable.ForceSetId(0);
-                        UndoMod.Instsance.ReportObservedAction(new ActionRelease(constructable));
+                        // We cannot report the node here because there still might be segments on it
                     }
                     catch (Exception e)
                     {
@@ -123,25 +130,44 @@ namespace UndoMod.Patches
                 }
                 else
                 {
-                    Invalidator.Instance.InvalidNodes.Add(node);
+                    //Invalidator.Instance.InvalidNodes.Add(node);
                 }
             }
 
             RedirectionHelper.RevertRedirect(releaseNode_original, releaseNodeState);
             releaseNodeState = RedirectionHelper.RedirectCalls(releaseNode_prefix, releaseNode_original);
 
-            PreReleaseNodeImplementation(node, ref data, checkDeleted, checkTouchable);
+            try
+            {
+                PreReleaseNodeImplementation(node, ref data, checkDeleted, checkTouchable);
+            }
+            finally
+            {
+                RedirectionHelper.RevertRedirect(releaseNode_prefix, releaseNodeState);
+                releaseNodeState = RedirectionHelper.RedirectCalls(releaseNode_original, releaseNode_prefix);
+            }
 
-            RedirectionHelper.RevertRedirect(releaseNode_prefix, releaseNodeState);
-            releaseNodeState = RedirectionHelper.RedirectCalls(releaseNode_original, releaseNode_prefix);
+            try
+            {
+                if(constructable != null) UndoMod.Instsance.ReportObservedAction(new ActionRelease(constructable));
+            } catch(Exception e)
+            {
+                Debug.Log(e);
+                UndoMod.Instsance.InvalidateAll();
+            }
         }
 
         private bool CreateSegment(out ushort segment, ref Randomizer randomizer, NetInfo info, ushort startNode, ushort endNode, Vector3 startDirection, Vector3 endDirection, uint buildIndex, uint modifiedIndex, bool invert)
         {
             //Debug.Log("redirect");
+            bool result;
             RedirectionHelper.RevertRedirect(createSegment_original, createSegmentState);
-            bool result = NetManager.instance.CreateSegment(out segment, ref randomizer, info, startNode, endNode, startDirection, endDirection, buildIndex, modifiedIndex, invert);
-            createSegmentState = RedirectionHelper.RedirectCalls(createSegment_original, createSegment_postfix);
+            try {
+                result = NetManager.instance.CreateSegment(out segment, ref randomizer, info, startNode, endNode, startDirection, endDirection, buildIndex, modifiedIndex, invert);
+            } finally
+            {
+                createSegmentState = RedirectionHelper.RedirectCalls(createSegment_original, createSegment_postfix);
+            }
 
             if (result && CheckIfObserving())
             {
@@ -160,7 +186,7 @@ namespace UndoMod.Patches
                 }
                 else
                 {
-                    Invalidator.Instance.InvalidSegments.Add(segment);
+                    //Invalidator.Instance.InvalidSegments.Add(segment);
                 }
             }
 
@@ -170,9 +196,16 @@ namespace UndoMod.Patches
         private bool CreateNode(out ushort node, ref Randomizer randomizer, NetInfo info, Vector3 position, uint buildIndex)
         {
             //Debug.Log("redirect");
+            bool result;
             RedirectionHelper.RevertRedirect(createNode_original, createNodeState);
-            bool result = NetManager.instance.CreateNode(out node, ref randomizer, info, position, buildIndex);
-            createNodeState = RedirectionHelper.RedirectCalls(createNode_original, createNode_postfix);
+            try
+            {
+                result = NetManager.instance.CreateNode(out node, ref randomizer, info, position, buildIndex);
+            }
+            finally
+            {
+                createNodeState = RedirectionHelper.RedirectCalls(createNode_original, createNode_postfix);
+            }
 
             if (result && CheckIfObserving())
             {
@@ -191,7 +224,7 @@ namespace UndoMod.Patches
                 }
                 else
                 {
-                    Invalidator.Instance.InvalidNodes.Add(node);
+                    //Invalidator.Instance.InvalidNodes.Add(node);
                 }
             }
 

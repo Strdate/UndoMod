@@ -12,6 +12,7 @@ namespace SharedEnvironment
 
         public void ForceSetId(ushort id)
         {
+            UpdateData();
             _id = id;
         }
 
@@ -23,6 +24,8 @@ namespace SharedEnvironment
         public abstract bool Create();
 
         public abstract bool Release();
+
+        protected abstract void UpdateData();
 
         public virtual int ConstructionCost()
         {

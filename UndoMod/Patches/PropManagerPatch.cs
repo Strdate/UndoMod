@@ -33,7 +33,7 @@ namespace UndoMod.Patches
 
         private bool CheckIfObserving()
         {
-            return !UndoMod.Instsance.PerformingAction && !UndoMod.Instsance.Invalidated && !UndoMod.Instsance.ObservingOnlyBuildings;
+            return !UndoMod.Instsance.PerformingAction && !UndoMod.Instsance.Invalidated && UndoMod.Instsance.ObservingOnlyBuildings == 0;
         }
 
         private void ReleaseProp(ushort Prop)
@@ -58,21 +58,34 @@ namespace UndoMod.Patches
                 }
                 else
                 {
-                    Invalidator.Instance.InvalidProps.Add(Prop);
+                    //Invalidator.Instance.InvalidProps.Add(Prop);
                 }
             }
 
             RedirectionHelper.RevertRedirect(releaseProp_original, releasePropState);
-            PropManager.instance.ReleaseProp(Prop);
-            releasePropState = RedirectionHelper.RedirectCalls(releaseProp_original, releaseProp_patch);
+            try
+            {
+                PropManager.instance.ReleaseProp(Prop);
+            }
+            finally
+            {
+                releasePropState = RedirectionHelper.RedirectCalls(releaseProp_original, releaseProp_patch);
+            }
         }
 
         private bool CreateProp(out ushort prop, ref Randomizer randomizer, PropInfo info, Vector3 position, float angle, bool single)
         {
             //Debug.Log("redirect");
+            bool result;
             RedirectionHelper.RevertRedirect(createProp_original, createPropState);
-            bool result = PropManager.instance.CreateProp(out prop, ref randomizer, info, position, angle, single);
-            createPropState = RedirectionHelper.RedirectCalls(createProp_original, createProp_patch);
+            try
+            {
+                result = PropManager.instance.CreateProp(out prop, ref randomizer, info, position, angle, single);
+            }
+            finally
+            {
+                createPropState = RedirectionHelper.RedirectCalls(createProp_original, createProp_patch);
+            }
 
             if (result && CheckIfObserving())
             {
@@ -91,7 +104,7 @@ namespace UndoMod.Patches
                 }
                 else
                 {
-                    Invalidator.Instance.InvalidProps.Add(prop);
+                    //Invalidator.Instance.InvalidProps.Add(prop);
                 }
             }
 

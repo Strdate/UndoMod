@@ -22,7 +22,7 @@ namespace SharedEnvironment
 
         public void Do()
         {
-            Debug.Log("Action: Creating item: " + Item.ToString());
+            //Debug.Log("Action: Creating item: " + Item.ToString());
             Item.Create();
         }
 
@@ -33,7 +33,7 @@ namespace SharedEnvironment
 
         public void Undo()
         {
-            Debug.Log("Action: Releasing item: " + Item.ToString());
+            //Debug.Log("Action: Releasing item: " + Item.ToString());
             Item.Release();
         }
 
@@ -59,7 +59,7 @@ namespace SharedEnvironment
 
         public void Do()
         {
-            Debug.Log("Action: Releasing item: " + Item.ToString());
+            //Debug.Log("Action: Releasing item: " + Item.ToString());
             Item.Release();
         }
 
@@ -70,7 +70,7 @@ namespace SharedEnvironment
 
         public void Undo()
         {
-            Debug.Log("Action: Creating item: " + Item.ToString());
+            //Debug.Log("Action: Creating item: " + Item.ToString());
             Item.Create();
         }
 

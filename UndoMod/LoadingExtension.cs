@@ -1,4 +1,5 @@
-﻿using ICities;
+﻿using Harmony;
+using ICities;
 using Redirection;
 using System;
 using System.Collections.Generic;
@@ -17,7 +18,7 @@ namespace UndoMod
 
         public static readonly string HarmonyID = "strad.undomod";
 
-        //private HarmonyInstance _harmony;
+        private HarmonyInstance _harmony;
 
         public LoadingExtension()
         {
@@ -31,10 +32,10 @@ namespace UndoMod
 
         public void OnLevelLoaded(LoadMode mode)
         {
-            /*if(_harmony == null)
+            if(_harmony == null)
             {
                 _harmony = HarmonyInstance.Create(HarmonyID);
-            }*/
+            }
 
             /*NetToolPatch.Patch(_harmony);
             NetManagerPatch.Patch(_harmony);*/
@@ -47,16 +48,16 @@ namespace UndoMod
             TreeManagerPatch.Patch();
             PropManagerPatch.Patch();
             NetManagerPatch.Patch();
-            BuildingManagerPatch.Patch();
-            //Redirector<NetTool>.Deploy();
-            //Redirector<NetManagerPatch>.Deploy();
+            BuildingManagerPatch.Patch(_harmony);
 
             m_detoured = true;
         }
 
         public void OnLevelUnloading()
         {
-            BuildingManagerPatch.Unpatch();
+            m_detoured = false;
+
+            BuildingManagerPatch.Unpatch(_harmony);
             NetManagerPatch.Unpatch();
             PropManagerPatch.Unpatch();
             BuildingToolPatch.Unpatch();
@@ -68,10 +69,6 @@ namespace UndoMod
             /*NetManagerPatch.Unpatch(_harmony);
             NetToolPatch.Unpatch(_harmony);*/
 
-            //Redirector<NetManagerPatch>.Revert();
-            //Redirector<NetTool>.Revert();
-
-            m_detoured = false;
         }
 
         public void OnReleased()

@@ -42,7 +42,7 @@ namespace UndoMod.Patches
         private bool CreateNodeImpl(bool switchDirection)
         {
             //Debug.Log("CreateNode detour");
-            UndoMod.Instsance.BeginObserving("Build roads");
+            UndoMod.Instsance.BeginObserving("Build roads", "Vanilla");
             bool result = false;
 
             RedirectionHelper.RevertRedirect(createNode_original, state);

@@ -88,10 +88,7 @@ namespace SharedEnvironment
         {
             if (IsCreated())
             {
-                _startDir = NetUtil.Segment(_id).m_startDirection;
-                _endDir = NetUtil.Segment(_id).m_endDirection;
-                _netInfoIndex = NetUtil.Segment(_id).m_infoIndex;
-                _invert = (NetUtil.Segment(_id).m_flags & NetSegment.Flags.Invert) != NetSegment.Flags.None;
+                UpdateData();
 
                 NetUtil.ReleaseSegment(_id);
                 if (!NetUtil.ExistsSegment(_id))
@@ -124,6 +121,14 @@ namespace SharedEnvironment
             return "[WSEGMENT created:" + IsCreated() + ", id:" + _id + ", info:" + NetInfo + " {" + _startNode + ", " + _endNode + "}]";
         }
 
+        protected override void UpdateData()
+        {
+            _startDir = NetUtil.Segment(_id).m_startDirection;
+            _endDir = NetUtil.Segment(_id).m_endDirection;
+            _netInfoIndex = NetUtil.Segment(_id).m_infoIndex;
+            _invert = (NetUtil.Segment(_id).m_flags & NetSegment.Flags.Invert) != NetSegment.Flags.None;
+        }
+
         // Constructors
 
         public WrappedSegment() { }
@@ -141,10 +146,7 @@ namespace SharedEnvironment
             }*/
             _id = id;
 
-            _startDir = NetUtil.Segment(_id).m_startDirection;
-            _endDir = NetUtil.Segment(_id).m_endDirection;
-            _netInfoIndex = NetUtil.Segment(_id).m_infoIndex;
-            _invert = (NetUtil.Segment(_id).m_flags & NetSegment.Flags.Invert) != NetSegment.Flags.None;
+            UpdateData();
 
             _startNode = startNode;
             _endNode = endNode;

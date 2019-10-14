@@ -29,7 +29,7 @@ namespace UndoMod.Patches
         private IEnumerator CreateTree()
         {
             Debug.Log("CreateTree detour");
-            UndoMod.Instsance.BeginObserving("Build tree");
+            UndoMod.Instsance.BeginObserving("Build tree", "Vanilla");
             IEnumerator result = null;
 
             RedirectionHelper.RevertRedirect(createTree_original, state);

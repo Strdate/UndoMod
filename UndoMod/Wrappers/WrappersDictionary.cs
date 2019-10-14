@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UndoMod;
 using UndoMod.Utils;
+using UnityEngine;
 
 namespace SharedEnvironment
 {
@@ -37,11 +39,6 @@ namespace SharedEnvironment
 
         public WrappedTree RegisterTree(uint id)
         {
-            if(Invalidator.Instance.InvalidTrees.Contains(id))
-            {
-                UndoMod.UndoMod.Instsance.InvalidateQueue();
-            }
-
             if (id == 0)
                 return null;
 
@@ -57,11 +54,6 @@ namespace SharedEnvironment
 
         public WrappedProp RegisterProp(ushort id)
         {
-            if (Invalidator.Instance.InvalidProps.Contains(id))
-            {
-                UndoMod.UndoMod.Instsance.InvalidateQueue();
-            }
-
             if (id == 0)
                 return null;
 
@@ -75,20 +67,15 @@ namespace SharedEnvironment
             return prop;
         }
 
-        public WrappedBuilding RegisterBuilding(ushort id)
+        public WrappedBuilding RegisterBuilding(ushort id, bool checkConnectedBuildings = true)
         {
-            if (Invalidator.Instance.InvalidBuildings.Contains(id))
-            {
-                UndoMod.UndoMod.Instsance.InvalidateQueue();
-            }
-
             if (id == 0)
                 return null;
 
             WrappedBuilding building;
             if (!RegisteredBuildings.TryGetValue(id, out building))
             {
-                building = new WrappedBuilding(id);
+                building = new WrappedBuilding(id, checkConnectedBuildings);
                 RegisteredBuildings[id] = building;
             }
 
@@ -97,11 +84,6 @@ namespace SharedEnvironment
 
         public WrappedNode RegisterNode(ushort id)
         {
-            if (Invalidator.Instance.InvalidNodes.Contains(id))
-            {
-                UndoMod.UndoMod.Instsance.InvalidateQueue();
-            }
-
             if (id == 0)
                 return null;
 
@@ -117,11 +99,6 @@ namespace SharedEnvironment
 
         public WrappedSegment RegisterSegment(ushort id)
         {
-            if (Invalidator.Instance.InvalidSegments.Contains(id))
-            {
-                UndoMod.UndoMod.Instsance.InvalidateQueue();
-            }
-
             if (id == 0)
                 return null;
 
@@ -139,8 +116,17 @@ namespace SharedEnvironment
 
         //
 
-        public void CollectGarbage(bool force = false)
+        public void CollectGarbage()
         {
+            /*Debug.Log("Collect garbage");
+
+            if((RegisteredNodes.Count + RegisteredSegments.Count + RegisteredBuildings.Count + RegisteredProps.Count + RegisteredTrees.Count)
+                //< UndoMod.UndoMod.Instsance.Queue.Length() * 30)
+                < 50)
+            {
+                return;
+            }
+
             List<IActionQueueItem> items = UndoMod.UndoMod.Instsance.Queue.AssembleAll();
             if(UndoMod.UndoMod.Instsance.ObservedItem != null)
             {
@@ -163,7 +149,54 @@ namespace SharedEnvironment
                 }
             }
 
-            //
+            HashSet<WrappedNode> collectedNodes = new HashSet<WrappedNode>();
+            HashSet<WrappedSegment> collectedSegments = new HashSet<WrappedSegment>();
+            HashSet<WrappedBuilding> collectedBuildings = new HashSet<WrappedBuilding>();
+            HashSet<WrappedProp> collectedProps = new HashSet<WrappedProp>();
+            HashSet<WrappedTree> collectedTrees = new HashSet<WrappedTree>();
+
+            while(constructables.Count > 0)
+            {
+                IConstructable item = constructables.Dequeue();
+                var node = item as WrappedNode;
+                var segment = item as WrappedSegment;
+                var building = item as WrappedBuilding;
+                var prop = item as WrappedProp;
+                var tree = item as WrappedTree;
+                if (node != null)
+                {
+                    collectedNodes.Add(node);
+                }
+                else if (segment != null)
+                {
+                    if(collectedSegments.Add(segment))
+                    {
+                        try
+                        {
+                            collectedNodes.Add(segment.StartNode);
+                            collectedNodes.Add(segment.EndNode);
+                        } catch { Debug.LogWarning("Garbage collection: invalid segment"); }
+                    }
+                }
+                else if (building != null)
+                {
+                    collectedBuildings.Add(building);
+                }
+                else if (prop != null)
+                {
+                    collectedProps.Add(prop);
+                }
+                else if (tree != null)
+                {
+                    collectedTrees.Add(tree);
+                }
+            }
+
+            RegisteredNodes = RegisteredNodes.Where(i => collectedNodes.Contains(i.Value)).ToDictionary(i => i.Key, i => i.Value);
+            RegisteredSegments = RegisteredSegments.Where(i => collectedSegments.Contains(i.Value)).ToDictionary(i => i.Key, i => i.Value);
+            RegisteredBuildings = RegisteredBuildings.Where(i => collectedBuildings.Contains(i.Value)).ToDictionary(i => i.Key, i => i.Value);
+            RegisteredProps = RegisteredProps.Where(i => collectedProps.Contains(i.Value)).ToDictionary(i => i.Key, i => i.Value);
+            RegisteredTrees = RegisteredTrees.Where(i => collectedTrees.Contains(i.Value)).ToDictionary(i => i.Key, i => i.Value);*/
         }
     }
 }

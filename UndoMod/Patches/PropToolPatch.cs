@@ -29,7 +29,7 @@ namespace UndoMod.Patches
         private IEnumerator CreateProp()
         {
             Debug.Log("CreateProp detour");
-            UndoMod.Instsance.BeginObserving("Build prop");
+            UndoMod.Instsance.BeginObserving("Build prop", "Vanilla");
             IEnumerator result = null;
 
             RedirectionHelper.RevertRedirect(createProp_original, state);

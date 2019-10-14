@@ -78,10 +78,7 @@ namespace SharedEnvironment
         {
             if (IsCreated())
             {
-                _position = ManagerUtils.Prop(_id).Position;
-                _angle = ManagerUtils.Prop(_id).m_angle;
-                _flags = ManagerUtils.Prop(_id).m_flags;
-                _propInfo = ManagerUtils.Prop(_id).Info;
+                UpdateData();
 
                 ManagerUtils.ReleaseProp(_id);
                 /*if (!NetUtil.ExistssNode(_id))
@@ -93,6 +90,14 @@ namespace SharedEnvironment
                 _id = 0;
             }
             return true;
+        }
+
+        protected override void UpdateData()
+        {
+            _position = ManagerUtils.Prop(_id).Position;
+            _angle = ManagerUtils.Prop(_id).m_angle;
+            _flags = ManagerUtils.Prop(_id).m_flags;
+            _propInfo = ManagerUtils.Prop(_id).Info;
         }
 
         // Constructors
@@ -107,10 +112,7 @@ namespace SharedEnvironment
             }
             _id = id;
 
-            _position = ManagerUtils.Prop(_id).Position;
-            _angle = ManagerUtils.Prop(_id).m_angle;
-            _flags = ManagerUtils.Prop(_id).m_flags;
-            _propInfo = ManagerUtils.Prop(_id).Info;
+            UpdateData();
         }
     }
 }
