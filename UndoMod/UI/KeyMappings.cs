@@ -17,6 +17,7 @@ namespace UndoMod.UI
         {
             AddKeymapping("Undo", ModInfo.sc_undo);
             AddKeymapping("Redo", ModInfo.sc_redo);
+            AddKeymapping("Peek Undo/Redo", ModInfo.sc_peek);
         }
 
         // Token: 0x06000024 RID: 36 RVA: 0x00003718 File Offset: 0x00001918

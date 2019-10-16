@@ -55,7 +55,7 @@ namespace UndoMod
             if (Observing)
             {
                 ObservedItem.Actions.Add(action);
-                if(ObservedItem.ModName == null)
+                if(ObservedItem.ModName == "")
                 {
                     try
                     {
@@ -99,7 +99,7 @@ namespace UndoMod
                     long moneyDelta = ObservedCashBalance - EconomyManager.instance.InternalCashAmount;
                     ObservedItem.DoCost = (int)moneyDelta;
                     Queue.Push(ObservedItem);
-                    Debug.Log("Pushing: " + ObservedItem);
+                    //Debug.Log("Pushing: " + ObservedItem);
                 }
                 ObservedItem = null;
                 Observing = false;
@@ -130,38 +130,31 @@ namespace UndoMod
         public void Undo()
         {
             IActionQueueItem item = Queue.Previous();
-            if (item != null)
-            {
-                Debug.Log("Undo " + item);
-                Singleton<SimulationManager>.instance.AddAction(() => {
-                    PerformingAction = true;
-                    if(!item.Undo())
-                    {
-                        InvalidateAll();
-                        PlayDisabledSound();
-                    }
-                    else
-                    {
-                        PlayEnabledSound();
-                    }
-                    PerformingAction = false;
-                });
-            }
-            else
-            {
-                PlayDisabledSound();
-            }
+            UndoRedoImpl(item, false);
         }
 
         public void Redo()
         {
             IActionQueueItem item = Queue.Next();
+            UndoRedoImpl(item, true);
+        }
+
+        private void UndoRedoImpl(IActionQueueItem item, bool redo)
+        {
             if (item != null)
             {
-                Debug.Log("Redo " + item);
+                if (ModInfo.sa_ignoreCosts.value || !LoadingExtension.Instsance.m_inStandardGame)
+                {
+                    var aitem = item as ActionQueueItem;
+                    if (aitem != null)
+                    {
+                        aitem.DoCost = 0;
+                    }
+                }
                 Singleton<SimulationManager>.instance.AddAction(() => {
+                    Debug.Log("Action " + item);
                     PerformingAction = true;
-                    if(!item.Redo())
+                    if (!(redo ? item.Redo() : item.Undo()))
                     {
                         InvalidateAll();
                         PlayDisabledSound();

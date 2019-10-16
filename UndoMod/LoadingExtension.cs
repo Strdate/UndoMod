@@ -1,4 +1,5 @@
-﻿using Harmony;
+﻿using ColossalFramework.UI;
+using Harmony;
 using ICities;
 using Redirection;
 using System;
@@ -15,6 +16,7 @@ namespace UndoMod
         public static LoadingExtension Instsance { get => _instance; }
 
         public bool m_detoured = false;
+        public bool m_inStandardGame = false;
 
         public static readonly string HarmonyID = "strad.undomod";
 
@@ -27,30 +29,40 @@ namespace UndoMod
 
         public void OnCreated(ILoading loading)
         {
-            
+            m_inStandardGame = loading.currentMode == AppMode.Game;
         }
 
         public void OnLevelLoaded(LoadMode mode)
         {
-            if(_harmony == null)
+            try
             {
-                _harmony = HarmonyInstance.Create(HarmonyID);
+                if (_harmony == null)
+                {
+                    _harmony = HarmonyInstance.Create(HarmonyID);
+                }
+
+                /*NetToolPatch.Patch(_harmony);
+                NetManagerPatch.Patch(_harmony);*/
+
+                BulldozeToolPatch.Patch();
+                TreeToolPatch.Patch();
+                PropToolPatch.Patch();
+                NetToolPatch.Patch();
+                BuildingToolPatch.Patch();
+                TreeManagerPatch.Patch();
+                PropManagerPatch.Patch();
+                NetManagerPatch.Patch();
+                BuildingManagerPatch.Patch(_harmony);
+
+                m_detoured = true;
             }
-
-            /*NetToolPatch.Patch(_harmony);
-            NetManagerPatch.Patch(_harmony);*/
-
-            BulldozeToolPatch.Patch();
-            TreeToolPatch.Patch();
-            PropToolPatch.Patch();
-            NetToolPatch.Patch();
-            BuildingToolPatch.Patch();
-            TreeManagerPatch.Patch();
-            PropManagerPatch.Patch();
-            NetManagerPatch.Patch();
-            BuildingManagerPatch.Patch(_harmony);
-
-            m_detoured = true;
+            catch (Exception e)
+            {
+                ExceptionPanel panel = UIView.library.ShowModal<ExceptionPanel>("ExceptionPanel");
+                panel.SetMessage("Undo It!", "FATAL ERROR: Mod failed to detour some of the game methods. The game code is now in invalid state. Restart the game" +
+                    " and if the problem persists, disable this mod, as it is probably in conflicit with some of your other mods.\n" +
+                    e.StackTrace, true);
+            }
         }
 
         public void OnLevelUnloading()
@@ -68,7 +80,7 @@ namespace UndoMod
             BulldozeToolPatch.Unpatch();
             /*NetManagerPatch.Unpatch(_harmony);
             NetToolPatch.Unpatch(_harmony);*/
-
+            UndoMod.Instsance.InvalidateAll();
         }
 
         public void OnReleased()

@@ -12,6 +12,8 @@ namespace SharedEnvironment
         public string Name { get; set; }
         public string ModName { get; set; }
 
+        public string InfoString { get => "Cost: " + DoCost; }
+
         public bool AutoObserving { get; set; }
 
         public List<IGameAction> Actions = new List<IGameAction>();
@@ -101,7 +103,7 @@ namespace SharedEnvironment
             return true;
         }
 
-        private bool HandleMoney(int amount)
+        private static bool HandleMoney(int amount)
         {
             if (amount == 0)
                 return true;

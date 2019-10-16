@@ -9,6 +9,7 @@ namespace SharedEnvironment
     {
         string Name { get; }
         string ModName { get; }
+        string InfoString { get; }
 
         bool Do();
         bool Undo();

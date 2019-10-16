@@ -81,6 +81,7 @@
     <Compile Include="Redirection\Tuple.cs" />
     <Compile Include="Threading.cs" />
     <Compile Include="UI\KeyMappings.cs" />
+    <Compile Include="UI\PeekUndoPanel.cs" />
     <Compile Include="UndoMod.cs" />
     <Compile Include="Utils\ManagerUtils.cs" />
     <Compile Include="Utils\NetUtil.cs" />

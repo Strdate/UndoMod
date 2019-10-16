@@ -12,7 +12,7 @@ namespace UndoMod
 {
     public class ModInfo : IUserMod
     {
-        public static readonly string VERSION = "ALPHA 0.0.1";
+        public static readonly string VERSION = "BETA 0.0.1";
         public const string settingsFileName = "UndoMod";
 
         public string Name => "Undo It!";
@@ -21,8 +21,10 @@ namespace UndoMod
 
         public static readonly SavedInputKey sc_undo = new SavedInputKey("sc_undo", settingsFileName, SavedInputKey.Encode(KeyCode.Z, true, false, false), true);
         public static readonly SavedInputKey sc_redo = new SavedInputKey("sc_redo", settingsFileName, SavedInputKey.Encode(KeyCode.Y, true, false, false), true);
+        public static readonly SavedInputKey sc_peek = new SavedInputKey("sc_peek", settingsFileName, SavedInputKey.Encode(KeyCode.Y, false, false, true), true);
 
         public static readonly SavedBool sa_disableShortcuts = new SavedBool("sa_disableShortcuts", settingsFileName, true, true);
+        public static readonly SavedBool sa_ignoreCosts = new SavedBool("sa_ignoreCosts", settingsFileName, false, true);
         public static readonly SavedInt sa_queueCapacity = new SavedInt("sa_queueCapacity", settingsFileName, 10, true);
 
         public ModInfo()
@@ -59,6 +61,12 @@ namespace UndoMod
                 });
                 checkBox.tooltip = "Shortcuts are inactive when using unsupported tools (eg. zoning tool) or tools with their own undo implementation (eg. Move It!)\n" +
                     "Warning: Although the shortcuts are disabled, all actions are still saved in undo queue!";
+
+                checkBox = (UICheckBox)group.AddCheckbox("Ignore costs", sa_ignoreCosts.value, (b) =>
+                {
+                    sa_ignoreCosts.value = b;
+                });
+                checkBox.tooltip = "Undo/Redo won't change account balance";
 
                 group.AddSpace(10);
 

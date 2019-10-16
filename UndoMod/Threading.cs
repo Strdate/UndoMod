@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using UndoMod.UI;
 using UnityEngine;
 
 namespace UndoMod
@@ -33,8 +34,19 @@ namespace UndoMod
                         UndoMod.Instsance.Redo();
                     _processed = true;
                 }
-            } else
+            }
+            else if (ModInfo.sc_peek.IsPressed())
             {
+                if (!_processed)
+                {
+                    if (CheckCurrentTool())
+                        PeekUndoPanel.Instance.Enable();
+                    _processed = true;
+                }
+            }
+            else
+            {
+                PeekUndoPanel.Instance.Disable();
                 _processed = false;
             }
 
@@ -69,7 +81,7 @@ namespace UndoMod
                 if(_lastBeginObserving.AddSeconds(1) < DateTime.Now)
                 {
                     _lastBeginObserving = DateTime.Now;
-                    UndoMod.Instsance.BeginObserving("<unknown>", null, true);
+                    UndoMod.Instsance.BeginObserving("<unknown>", "", true);
                 }
             }
         }
