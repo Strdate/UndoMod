@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using UndoMod;
+using System;
 using UndoMod.Utils;
 using UnityEngine;
 
@@ -8,15 +8,17 @@ namespace SharedEnvironment
 {
     public class WrappersDictionary
     {
-        public Dictionary<ushort, WrappedNode> RegisteredNodes;
+        private HashSet<WeakReference> BuildingOwnedNodes;
 
-        public Dictionary<ushort, WrappedSegment> RegisteredSegments;
+        private Dictionary<ushort, WeakReference> RegisteredNodes;
 
-        public Dictionary<ushort, WrappedBuilding> RegisteredBuildings;
+        private Dictionary<ushort, WeakReference> RegisteredSegments;
 
-        public Dictionary<ushort, WrappedProp> RegisteredProps;
+        private Dictionary<ushort, WeakReference> RegisteredBuildings;
 
-        public Dictionary<uint, WrappedTree> RegisteredTrees;
+        private Dictionary<ushort, WeakReference> RegisteredProps;
+
+        private Dictionary<uint, WeakReference> RegisteredTrees;
 
         public WrappersDictionary()
         {
@@ -25,11 +27,13 @@ namespace SharedEnvironment
 
         private void Init()
         {
-            RegisteredNodes = new Dictionary<ushort, WrappedNode>();
-            RegisteredSegments = new Dictionary<ushort, WrappedSegment>();
-            RegisteredBuildings = new Dictionary<ushort, WrappedBuilding>();
-            RegisteredProps = new Dictionary<ushort, WrappedProp>();
-            RegisteredTrees = new Dictionary<uint, WrappedTree>();
+            RegisteredNodes = new Dictionary<ushort, WeakReference>();
+            RegisteredSegments = new Dictionary<ushort, WeakReference>();
+            RegisteredBuildings = new Dictionary<ushort, WeakReference>();
+            RegisteredProps = new Dictionary<ushort, WeakReference>();
+            RegisteredTrees = new Dictionary<uint, WeakReference>();
+
+            BuildingOwnedNodes = new HashSet<WeakReference>();
         }
 
         public void Clear()
@@ -43,10 +47,11 @@ namespace SharedEnvironment
                 return null;
 
             WrappedTree tree;
-            if (!RegisteredTrees.TryGetValue(id, out tree))
+            WeakReference reference;
+            if (!RegisteredTrees.TryGetValue(id, out reference) || (tree = (WrappedTree)reference.Target) == null)
             {
                 tree = new WrappedTree(id);
-                RegisteredTrees[id] = tree;
+                RegisteredTrees[id] = new WeakReference(tree);
             }
 
             return tree;
@@ -58,10 +63,11 @@ namespace SharedEnvironment
                 return null;
 
             WrappedProp prop;
-            if (!RegisteredProps.TryGetValue(id, out prop))
+            WeakReference reference;
+            if (!RegisteredProps.TryGetValue(id, out reference) || (prop = (WrappedProp)reference.Target) == null)
             {
                 prop = new WrappedProp(id);
-                RegisteredProps[id] = prop;
+                RegisteredProps[id] = new WeakReference(prop);
             }
 
             return prop;
@@ -73,10 +79,11 @@ namespace SharedEnvironment
                 return null;
 
             WrappedBuilding building;
-            if (!RegisteredBuildings.TryGetValue(id, out building))
+            WeakReference reference;
+            if (!RegisteredBuildings.TryGetValue(id, out reference) || (building = (WrappedBuilding)reference.Target) == null)
             {
                 building = new WrappedBuilding(id, checkConnectedBuildings);
-                RegisteredBuildings[id] = building;
+                RegisteredBuildings[id] = new WeakReference(building);
             }
 
             return building;
@@ -88,10 +95,11 @@ namespace SharedEnvironment
                 return null;
 
             WrappedNode node;
-            if (!RegisteredNodes.TryGetValue(id, out node))
+            WeakReference reference;
+            if (!RegisteredNodes.TryGetValue(id, out reference) || (node = (WrappedNode)reference.Target) == null)
             {
                 node = new WrappedNode(id);
-                RegisteredNodes[id] = node;
+                RegisteredNodes[id] = new WeakReference(node);
             }
 
             return node;
@@ -103,100 +111,55 @@ namespace SharedEnvironment
                 return null;
 
             WrappedSegment segment;
-            if (!RegisteredSegments.TryGetValue(id, out segment))
+            WeakReference reference;
+            if (!RegisteredSegments.TryGetValue(id, out reference) || (segment = (WrappedSegment)reference.Target) == null)
             {
                 var node1 = RegisterNode(NetUtil.Segment(id).m_startNode);
                 var node2 = RegisterNode(NetUtil.Segment(id).m_endNode);
                 segment = new WrappedSegment(node1, node2, id);
-                RegisteredSegments[id] = segment;
+                RegisteredSegments[id] = new WeakReference(segment);
             }
 
             return segment;
         }
 
-        //
-
-        public void CollectGarbage()
+        public void AddBuildingNode(WrappedNode node)
         {
-            /*Debug.Log("Collect garbage");
+            BuildingOwnedNodes.Add(new WeakReference(node));
+        }
 
-            if((RegisteredNodes.Count + RegisteredSegments.Count + RegisteredBuildings.Count + RegisteredProps.Count + RegisteredTrees.Count)
+        public void FixBuildingNode(ushort node)
+        {
+            foreach(var reference in BuildingOwnedNodes)
+            {
+                WrappedNode wnode = (WrappedNode)reference.Target;
+                if(wnode != null)
+                {
+                    wnode.Check();
+                    if (!wnode.IsCreated() && wnode.Position == NetUtil.Node(node).m_position && wnode.Position != default(Vector3) && wnode.NetInfo == NetUtil.Node(node).Info)
+                    {
+                        wnode.ForceSetId(node);
+                        break;
+                    }
+                }  
+            }
+        }
+
+        /*public void CollectGarbage(int queueLength)
+        {
+            if ((RegisteredNodes.Count + RegisteredSegments.Count + RegisteredBuildings.Count + RegisteredProps.Count + RegisteredTrees.Count)
                 //< UndoMod.UndoMod.Instsance.Queue.Length() * 30)
                 < 50)
             {
                 return;
             }
 
-            List<IActionQueueItem> items = UndoMod.UndoMod.Instsance.Queue.AssembleAll();
-            if(UndoMod.UndoMod.Instsance.ObservedItem != null)
-            {
-                items.Add(UndoMod.UndoMod.Instsance.ObservedItem);
-            }
-
-            Queue<IConstructable> constructables = new Queue<IConstructable>();
-            foreach(var item in items)
-            {
-                ActionQueueItem item2 = item as ActionQueueItem;
-                if(item2 != null)
-                {
-                    item2.Actions.ForEach((a) => {
-                        var constructable = a as ConstructionAction;
-                        if(a != null)
-                        {
-                            constructables.Enqueue(constructable.Item);
-                        }
-                    });
-                }
-            }
-
-            HashSet<WrappedNode> collectedNodes = new HashSet<WrappedNode>();
-            HashSet<WrappedSegment> collectedSegments = new HashSet<WrappedSegment>();
-            HashSet<WrappedBuilding> collectedBuildings = new HashSet<WrappedBuilding>();
-            HashSet<WrappedProp> collectedProps = new HashSet<WrappedProp>();
-            HashSet<WrappedTree> collectedTrees = new HashSet<WrappedTree>();
-
-            while(constructables.Count > 0)
-            {
-                IConstructable item = constructables.Dequeue();
-                var node = item as WrappedNode;
-                var segment = item as WrappedSegment;
-                var building = item as WrappedBuilding;
-                var prop = item as WrappedProp;
-                var tree = item as WrappedTree;
-                if (node != null)
-                {
-                    collectedNodes.Add(node);
-                }
-                else if (segment != null)
-                {
-                    if(collectedSegments.Add(segment))
-                    {
-                        try
-                        {
-                            collectedNodes.Add(segment.StartNode);
-                            collectedNodes.Add(segment.EndNode);
-                        } catch { Debug.LogWarning("Garbage collection: invalid segment"); }
-                    }
-                }
-                else if (building != null)
-                {
-                    collectedBuildings.Add(building);
-                }
-                else if (prop != null)
-                {
-                    collectedProps.Add(prop);
-                }
-                else if (tree != null)
-                {
-                    collectedTrees.Add(tree);
-                }
-            }
-
-            RegisteredNodes = RegisteredNodes.Where(i => collectedNodes.Contains(i.Value)).ToDictionary(i => i.Key, i => i.Value);
-            RegisteredSegments = RegisteredSegments.Where(i => collectedSegments.Contains(i.Value)).ToDictionary(i => i.Key, i => i.Value);
-            RegisteredBuildings = RegisteredBuildings.Where(i => collectedBuildings.Contains(i.Value)).ToDictionary(i => i.Key, i => i.Value);
-            RegisteredProps = RegisteredProps.Where(i => collectedProps.Contains(i.Value)).ToDictionary(i => i.Key, i => i.Value);
-            RegisteredTrees = RegisteredTrees.Where(i => collectedTrees.Contains(i.Value)).ToDictionary(i => i.Key, i => i.Value);*/
-        }
+            RegisteredNodes = RegisteredNodes.Where(kvp => kvp.Value.IsAlive).ToDictionary(kvp => kvp.Key, kvp => kvp.Value );
+            RegisteredSegments = RegisteredSegments.Where(kvp => kvp.Value.IsAlive).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            RegisteredProps = RegisteredProps.Where(kvp => kvp.Value.IsAlive).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            RegisteredBuildings = RegisteredBuildings.Where(kvp => kvp.Value.IsAlive).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            RegisteredTrees = RegisteredTrees.Where(kvp => kvp.Value.IsAlive).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            BuildingOwnedNodes.RemoveWhere(i => !i.IsAlive);
+        }*/
     }
 }

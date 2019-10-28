@@ -112,14 +112,17 @@ namespace UndoMod.Patches
         {
             //Debug.Log("redirect");
             WrappedNode constructable = null;
-            if ((NetUtil.Node(node).m_flags != NetNode.Flags.None) && CheckIfObserving() && PreReleaseNodeImplementation_check(node, ref data, checkDeleted, checkTouchable))
+            if ((NetUtil.Node(node).m_flags != NetNode.Flags.None) && !UndoMod.Instsance.Invalidated && PreReleaseNodeImplementation_check(node, ref data, checkDeleted, checkTouchable))
             {
                 if (UndoMod.Instsance.Observing)
                 {
                     try
                     {
-                        constructable = UndoMod.Instsance.WrappersDictionary.RegisterNode(node);
-                        constructable.ForceSetId(0);
+                        if(NetUtil.Node(node).m_building == 0 || UndoMod.Instsance.ObservingOnlyBuildings == 0)
+                        {
+                            constructable = UndoMod.Instsance.WrappersDictionary.RegisterNode(node);
+                            constructable.ForceSetId(0);
+                        }
                         // We cannot report the node here because there still might be segments on it
                     }
                     catch (Exception e)
@@ -149,7 +152,18 @@ namespace UndoMod.Patches
 
             try
             {
-                if(constructable != null) UndoMod.Instsance.ReportObservedAction(new ActionRelease(constructable));
+                if (constructable != null)
+                    if (UndoMod.Instsance.ObservingOnlyBuildings == 0)
+                    {
+                        if(!UndoMod.Instsance.PerformingAction)
+                        {
+                            UndoMod.Instsance.ReportObservedAction(new ActionRelease(constructable));
+                        }
+                    } else
+                    {
+                        UndoMod.Instsance.WrappersDictionary.AddBuildingNode(constructable);
+                    }
+                
             } catch(Exception e)
             {
                 Debug.Log(e);
@@ -226,6 +240,11 @@ namespace UndoMod.Patches
                 {
                     //Invalidator.Instance.InvalidNodes.Add(node);
                 }
+            }
+
+            if(result && UndoMod.Instsance.ObservingOnlyBuildings > 0)
+            {
+                UndoMod.Instsance.WrappersDictionary.FixBuildingNode(node);
             }
 
             return result;

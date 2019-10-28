@@ -90,8 +90,11 @@ namespace UndoMod.Utils
             ref NetNode startNode = ref Node(startNodeId);
             ref NetNode endNode = ref Node(endNodeId);
 
-            if (((startNode.m_flags & NetNode.Flags.Created) == NetNode.Flags.None) || ((endNode.m_flags & NetNode.Flags.Created) == NetNode.Flags.None))
-                throw new Exception("Failed to create NetSegment: Invalid node(s)");
+            if ((startNode.m_flags & NetNode.Flags.Created) == NetNode.Flags.None)
+                throw new Exception("Failed to create NetSegment: Invalid start node " + startNodeId);
+
+            if ((endNode.m_flags & NetNode.Flags.Created) == NetNode.Flags.None)
+                throw new Exception("Failed to create NetSegment: Invalid end node " + endNodeId);
 
             var result = NetManager.instance.CreateSegment(out ushort newSegmentId, ref randomizer, netInfo, switchStartAndEnd ? endNodeId : startNodeId,
                  switchStartAndEnd ? startNodeId : endNodeId,
@@ -99,7 +102,7 @@ namespace UndoMod.Utils
                          Singleton<SimulationManager>.instance.m_currentBuildIndex, invert);
 
             if (!result)
-                throw new Exception("Failed to create NetSegment");
+                throw new Exception("Failed to create NetSegment: result was false");
 
             Singleton<SimulationManager>.instance.m_currentBuildIndex++;
 

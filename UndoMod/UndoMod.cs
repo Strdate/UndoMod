@@ -7,6 +7,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using UndoMod.Patches;
+using UndoMod.Utils;
 using UnityEngine;
 
 namespace UndoMod
@@ -105,12 +106,15 @@ namespace UndoMod
                 Observing = false;
                 ObservingOnlyBuildings = 0;
             }
-            WrappersDictionary.CollectGarbage();
         }
 
-        public void InvalidateAll()
+        public void InvalidateAll(bool error = true)
         {
-            Debug.LogWarning("Invalidate all");
+            if(error)
+            {
+                Debug.LogWarning("Error: Invalidate all");
+                Singleton<SimulationManager>.instance.AddAction(() => CleanGhostNodes());
+            }
             Queue.Clear();
             WrappersDictionary.Clear();
             //Invalidator.Instance.Clear();
@@ -185,6 +189,40 @@ namespace UndoMod
             if (UIView.GetAView().defaultDisabledClickSound != null && UIView.playSoundDelegate != null)
             {
                 UIView.playSoundDelegate(UIView.GetAView().defaultDisabledClickSound, 1f);
+            }
+        }
+
+        private void CleanGhostNodes()
+        {
+            int count = 0;
+
+            // From moveit
+            for (ushort nodeId = 0; nodeId < NetManager.instance.m_nodes.m_buffer.Length && count < 10; nodeId++)
+            {
+                NetNode node = NetManager.instance.m_nodes.m_buffer[nodeId];
+                if ((node.m_flags & NetNode.Flags.Created) == NetNode.Flags.None) continue;
+                if ((node.m_flags & NetNode.Flags.Untouchable) != NetNode.Flags.None) continue;
+                bool hasSegments = false;
+
+                for (int i = 0; i < 8; i++)
+                {
+                    if (node.GetSegment(i) > 0)
+                    {
+                        hasSegments = true;
+                        break;
+                    }
+                }
+
+                if (!hasSegments)
+                {
+                    count++;
+                    NetUtil.ReleaseNode(nodeId);
+                }
+            }
+
+            if (count > 0)
+            {
+                Debug.Log($"Removed {count} ghost nodes");
             }
         }
     }

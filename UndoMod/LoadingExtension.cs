@@ -80,7 +80,7 @@ namespace UndoMod
             BulldozeToolPatch.Unpatch();
             /*NetManagerPatch.Unpatch(_harmony);
             NetToolPatch.Unpatch(_harmony);*/
-            UndoMod.Instsance.InvalidateAll();
+            UndoMod.Instsance.InvalidateAll(false);
         }
 
         public void OnReleased()

@@ -128,7 +128,7 @@ namespace UndoMod.Patches
                 RedirectionHelper.RevertRedirect(relocateBuilding_patch, relocateBuildingState);
                 relocateBuildingState = RedirectionHelper.RedirectCalls(relocateBuilding_original, relocateBuilding_patch);
             }
-            UndoMod.Instsance.InvalidateAll();
+            UndoMod.Instsance.InvalidateAll(false);
         }
 
         /*private void ReleaseBuilding(ushort building)

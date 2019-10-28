@@ -12,7 +12,10 @@ namespace SharedEnvironment
 
         public void ForceSetId(ushort id)
         {
-            UpdateData();
+            if(IsCreated())
+            {
+                UpdateData();
+            }
             _id = id;
         }
 

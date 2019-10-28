@@ -30,8 +30,23 @@ namespace SharedEnvironment
 
         // methods
 
+        public bool Check()
+        {
+            if(_id > 0 && !NetUtil.ExistsNode(_id))
+            {
+                _id = 0;
+                return false;
+            }
+            return true;
+        }
+
         public override bool Create()
         {
+            if(!Check())
+            {
+                Debug.LogWarning("The node should exist but does not.");
+            }
+
             if(!IsCreated())
             {
                 _id = NetUtil.CreateNode( NetUtil.NetinfoFromIndex(_netInfoIndex) , _position);
@@ -42,7 +57,12 @@ namespace SharedEnvironment
 
         public override bool Release()
         {
-            if(IsCreated())
+            if (!Check())
+            {
+                Debug.LogWarning("The node should exist but does not.");
+            }
+
+            if (IsCreated())
             {
                 UpdateData();
 
