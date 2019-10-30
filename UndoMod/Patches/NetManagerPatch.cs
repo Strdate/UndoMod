@@ -1,4 +1,5 @@
 ﻿using ColossalFramework.Math;
+using Harmony;
 using Redirection;
 using SharedEnvironment;
 using System;
@@ -11,8 +12,8 @@ namespace UndoMod.Patches
     public class NetManagerPatch
     {
         private static MethodInfo releaseSegment_original = typeof(NetManager).GetMethod("PreReleaseSegmentImplementation", BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[] { typeof(ushort), typeof(NetSegment).MakeByRefType(), typeof(bool) }, null);
-        private static MethodInfo releaseSegment_prefix = typeof(NetManagerPatch).GetMethod("PreReleaseSegmentImplementation", BindingFlags.NonPublic | BindingFlags.Instance);
-        public static RedirectCallsState releaseSegmentState;
+        //private static MethodInfo releaseSegment_prefix = typeof(NetManagerPatch).GetMethod("PreReleaseSegmentImplementation", BindingFlags.NonPublic | BindingFlags.Instance);
+        //public static RedirectCallsState releaseSegmentState;
 
         //private static MethodInfo releaseNode_original = typeof(NetManager).GetMethod("ReleaseNode");
         private static MethodInfo releaseNode_original = typeof(NetManager).GetMethod("PreReleaseNodeImplementation", BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[] { typeof(ushort), typeof(NetNode).MakeByRefType(), typeof(bool), typeof(bool)}, null);
@@ -20,37 +21,42 @@ namespace UndoMod.Patches
         public static RedirectCallsState releaseNodeState;
 
         private static MethodInfo createSegment_original = typeof(NetManager).GetMethod("CreateSegment");
-        private static MethodInfo createSegment_postfix = typeof(NetManagerPatch).GetMethod("CreateSegment", BindingFlags.NonPublic | BindingFlags.Instance);
-        public static RedirectCallsState createSegmentState;
+        //private static MethodInfo createSegment_postfix = typeof(NetManagerPatch).GetMethod("CreateSegment", BindingFlags.NonPublic | BindingFlags.Instance);
+        //public static RedirectCallsState createSegmentState;
 
         private static MethodInfo createNode_original = typeof(NetManager).GetMethod("CreateNode");
         private static MethodInfo createNode_postfix = typeof(NetManagerPatch).GetMethod("CreateNode", BindingFlags.NonPublic | BindingFlags.Instance);
         public static RedirectCallsState createNodeState;
 
-        public static void Patch()
+        public static void Patch(HarmonyInstance _harmony)
         {
 
-            releaseSegmentState = RedirectionHelper.RedirectCalls(releaseSegment_original, releaseSegment_prefix);
+            //releaseSegmentState = RedirectionHelper.RedirectCalls(releaseSegment_original, releaseSegment_prefix);
             releaseNodeState = RedirectionHelper.RedirectCalls(releaseNode_original, releaseNode_prefix);
-            createSegmentState = RedirectionHelper.RedirectCalls(createSegment_original, createSegment_postfix);
+            //createSegmentState = RedirectionHelper.RedirectCalls(createSegment_original, createSegment_postfix);
             createNodeState = RedirectionHelper.RedirectCalls(createNode_original, createNode_postfix);
 
+            _harmony.Patch(releaseSegment_original, new HarmonyMethod(releaseSegment_prefix));
+            _harmony.Patch(createSegment_original, null, new HarmonyMethod(createSegment_postfix));
         }
 
-        public static void Unpatch()
+        public static void Unpatch(HarmonyInstance _harmony)
         {
-            RedirectionHelper.RevertRedirect(releaseSegment_original, releaseSegmentState);
+            //RedirectionHelper.RevertRedirect(releaseSegment_original, releaseSegmentState);
             RedirectionHelper.RevertRedirect(releaseNode_original, releaseNodeState);
-            RedirectionHelper.RevertRedirect(createSegment_original, createSegmentState);
+            //RedirectionHelper.RevertRedirect(createSegment_original, createSegmentState);
             RedirectionHelper.RevertRedirect(createNode_original, createNodeState);
+
+            _harmony.Unpatch(releaseSegment_original, releaseSegment_prefix);
+            _harmony.Unpatch(createSegment_original, createSegment_postfix);
         }
 
-        private bool CheckIfObserving()
+        private static bool CheckIfObserving()
         {
             return !UndoMod.Instsance.PerformingAction && !UndoMod.Instsance.Invalidated && UndoMod.Instsance.ObservingOnlyBuildings == 0;
         }
 
-        private void PreReleaseSegmentImplementation(ushort segment, ref NetSegment data, bool keepNodes)
+        /*private void PreReleaseSegmentImplementation(ushort segment, ref NetSegment data, bool keepNodes)
         {
             //Debug.Log("redirect");
             if ((NetUtil.Segment(segment).m_flags != NetSegment.Flags.None) && CheckIfObserving())
@@ -85,7 +91,7 @@ namespace UndoMod.Patches
                 RedirectionHelper.RevertRedirect(releaseSegment_prefix, releaseSegmentState);
                 releaseSegmentState = RedirectionHelper.RedirectCalls(releaseSegment_original, releaseSegment_prefix);
             }
-        }
+        }*/
 
         // semi stock code
         private bool PreReleaseNodeImplementation_check(ushort node, ref NetNode data, bool checkDeleted, bool checkTouchable)
@@ -171,7 +177,7 @@ namespace UndoMod.Patches
             }
         }
 
-        private bool CreateSegment(out ushort segment, ref Randomizer randomizer, NetInfo info, ushort startNode, ushort endNode, Vector3 startDirection, Vector3 endDirection, uint buildIndex, uint modifiedIndex, bool invert)
+        /*private bool CreateSegment(out ushort segment, ref Randomizer randomizer, NetInfo info, ushort startNode, ushort endNode, Vector3 startDirection, Vector3 endDirection, uint buildIndex, uint modifiedIndex, bool invert)
         {
             //Debug.Log("redirect");
             bool result;
@@ -205,7 +211,7 @@ namespace UndoMod.Patches
             }
 
             return result;
-        }
+        }*/
 
         private bool CreateNode(out ushort node, ref Randomizer randomizer, NetInfo info, Vector3 position, uint buildIndex)
         {
@@ -250,19 +256,19 @@ namespace UndoMod.Patches
             return result;
         }
 
-        /*private static MethodInfo releaseSegment_original = typeof(NetManager).GetMethod("ReleaseSegment");
-        private static MethodInfo releaseSegment_prefix = typeof(NetManagerPatch).GetMethod("ReleaseSegment_prefix", BindingFlags.NonPublic);
+        //private static MethodInfo releaseSegment_original = typeof(NetManager).GetMethod("ReleaseSegment");
+        private static MethodInfo releaseSegment_prefix = typeof(NetManagerPatch).GetMethod("ReleaseSegment_prefix", BindingFlags.NonPublic | BindingFlags.Static);
 
-        private static MethodInfo releaseNode_original = typeof(NetManager).GetMethod("ReleaseNode");
-        private static MethodInfo releaseNode_prefix = typeof(NetManagerPatch).GetMethod("ReleaseNode_prefix", BindingFlags.NonPublic);
+        /*private static MethodInfo releaseNode_original = typeof(NetManager).GetMethod("ReleaseNode");
+        private static MethodInfo releaseNode_prefix = typeof(NetManagerPatch).GetMethod("ReleaseNode_prefix", BindingFlags.NonPublic);*/
 
-        private static MethodInfo createSegment_original = typeof(NetManager).GetMethod("CreateSegment");
-        private static MethodInfo createSegment_postfix = typeof(NetManagerPatch).GetMethod("CreateSegment_postfix", BindingFlags.NonPublic);
+        //private static MethodInfo createSegment_original = typeof(NetManager).GetMethod("CreateSegment");
+        private static MethodInfo createSegment_postfix = typeof(NetManagerPatch).GetMethod("CreateSegment_postfix", BindingFlags.NonPublic | BindingFlags.Static);
 
-        private static MethodInfo createNode_original = typeof(NetManager).GetMethod("CreateNode");
-        private static MethodInfo createNode_postfix = typeof(NetManagerPatch).GetMethod("CreateNode_postfix", BindingFlags.NonPublic);
+        /*private static MethodInfo createNode_original = typeof(NetManager).GetMethod("CreateNode");
+        private static MethodInfo createNode_postfix = typeof(NetManagerPatch).GetMethod("CreateNode_postfix", BindingFlags.NonPublic);*/
 
-        public static void Patch(HarmonyInstance _harmony)
+        /*public static void Patch(HarmonyInstance _harmony)
         {
             _harmony.Patch(releaseSegment_original, new HarmonyMethod( releaseSegment_prefix ));
             _harmony.Patch(releaseNode_original, new HarmonyMethod(releaseNode_prefix));
@@ -278,18 +284,33 @@ namespace UndoMod.Patches
             _harmony.Unpatch(createNode_original, createNode_postfix);
         }*/
 
-        /*private static void ReleaseSegment_prefix(ushort segment)
+        private static void ReleaseSegment_prefix(ushort segment, ref NetSegment data, bool keepNodes)
         {
-            if ((NetUtil.Segment(segment).m_flags != NetSegment.Flags.None) && !UndoMod.Instsance.PerformingAction && (UndoMod.Instsance.ObservedItem != null))
+            //Debug.Log("Harmony patch: release segment prefix");
+            if ((NetUtil.Segment(segment).m_flags != NetSegment.Flags.None) && CheckIfObserving())
             {
-                var action = UndoMod.Instsance.WrappersDictionary.RegisterSegment(segment);
-                action.IsBuildAction = false;
-                action.ForceSetId(0);
-                UndoMod.Instsance.ObservedItem.Actions.Add(action);
+                if (UndoMod.Instsance.Observing)
+                {
+                    try
+                    {
+                        var constructable = UndoMod.Instsance.WrappersDictionary.RegisterSegment(segment);
+                        constructable.ForceSetId(0);
+                        UndoMod.Instsance.ReportObservedAction(new ActionRelease(constructable));
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.Log(e);
+                        UndoMod.Instsance.InvalidateAll();
+                    }
+                }
+                else
+                {
+                    //Invalidator.Instance.InvalidSegments.Add(segment);
+                }
             }
         }
 
-        private static void ReleaseNode_prefix(ushort node)
+        /*private static void ReleaseNode_prefix(ushort node)
         {
             if((NetUtil.Node(node).m_flags != NetNode.Flags.None) && !UndoMod.Instsance.PerformingAction && (UndoMod.Instsance.ObservedItem != null))
             {
@@ -298,18 +319,34 @@ namespace UndoMod.Patches
                 action.ForceSetId(0);
                 UndoMod.Instsance.ObservedItem.Actions.Add(action);
             }
-        }
+        }*/
 
-        private static void CreateSegment_postfix(bool __result, ushort segment)
+        private static void CreateSegment_postfix(ref ushort segment, bool __result)
         {
-            if(__result && !UndoMod.Instsance.PerformingAction && (UndoMod.Instsance.ObservedItem != null))
+            //Debug.Log("Harmony patch: create segment postfix");
+            if (__result && CheckIfObserving())
             {
-                var action = UndoMod.Instsance.WrappersDictionary.RegisterSegment(segment);
-                UndoMod.Instsance.ObservedItem.Actions.Add(action);
+                if (UndoMod.Instsance.Observing)
+                {
+                    try
+                    {
+                        var constructable = UndoMod.Instsance.WrappersDictionary.RegisterSegment(segment);
+                        UndoMod.Instsance.ReportObservedAction(new ActionCreate(constructable));
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.Log(e);
+                        UndoMod.Instsance.InvalidateAll();
+                    }
+                }
+                else
+                {
+                    //Invalidator.Instance.InvalidSegments.Add(segment);
+                }
             }
         }
 
-        private static void CreateNode_postfix(bool __result, ushort node)
+        /*private static void CreateNode_postfix(bool __result, ushort node)
         {
             if (__result && !UndoMod.Instsance.PerformingAction && (UndoMod.Instsance.ObservedItem != null))
             {

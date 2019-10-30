@@ -51,7 +51,7 @@ namespace UndoMod
                 BuildingToolPatch.Patch();
                 TreeManagerPatch.Patch();
                 PropManagerPatch.Patch();
-                NetManagerPatch.Patch();
+                NetManagerPatch.Patch(_harmony);
                 BuildingManagerPatch.Patch(_harmony);
 
                 m_detoured = true;
@@ -70,7 +70,7 @@ namespace UndoMod
             m_detoured = false;
 
             BuildingManagerPatch.Unpatch(_harmony);
-            NetManagerPatch.Unpatch();
+            NetManagerPatch.Unpatch(_harmony);
             PropManagerPatch.Unpatch();
             BuildingToolPatch.Unpatch();
             TreeManagerPatch.Unpatch();
