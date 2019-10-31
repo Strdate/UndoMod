@@ -81,7 +81,7 @@ namespace UndoMod.Patches
             UndoMod.Instsance.ObservingOnlyBuildings++;
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
+        /*[MethodImpl(MethodImplOptions.NoInlining)]
         private static bool CheckCaller()
         {
             System.Diagnostics.StackTrace stackTrace = new System.Diagnostics.StackTrace();
@@ -97,12 +97,12 @@ namespace UndoMod.Patches
             }
 
             return true;
-        }
+        }*/
 
         private static void CreateBuilding_Postfix(bool __result, ref ushort building)
         {
             UndoMod.Instsance.ObservingOnlyBuildings--;
-            if (__result && !UndoMod.Instsance.PerformingAction && !UndoMod.Instsance.Invalidated && CheckCaller())
+            if (__result && !UndoMod.Instsance.PerformingAction && !UndoMod.Instsance.Invalidated /*&& CheckCaller()*/)
             {
                 if (UndoMod.Instsance.Observing)
                 {
