@@ -61,6 +61,7 @@
     <Compile Include="GameActions\ActionQueueItem.cs" />
     <Compile Include="GameActions\ConstructionActions.cs" />
     <Compile Include="GameActions\IActionQueueItem.cs" />
+    <Compile Include="Integration\NetworkSkins.cs" />
     <Compile Include="LoadingExtension.cs" />
     <Compile Include="ModInfo.cs" />
     <Compile Include="Patches\BuildingManagerPatch.cs" />

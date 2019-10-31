@@ -2,11 +2,13 @@
 using Harmony;
 using ICities;
 using Redirection;
+using SharedEnvironment;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UndoMod.Patches;
+using UnityEngine;
 
 namespace UndoMod
 {
@@ -53,6 +55,11 @@ namespace UndoMod
                 PropManagerPatch.Patch();
                 NetManagerPatch.Patch(_harmony);
                 BuildingManagerPatch.Patch(_harmony);
+
+                if(WrappedSegment.NS == null)
+                {
+                    try { WrappedSegment.NS = new NS_Manager(); } catch(Exception e) { Debug.LogError(e); }
+                }
 
                 m_detoured = true;
             }

@@ -5,11 +5,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
+using UndoMod;
 
 namespace SharedEnvironment
 {
     public class WrappedSegment : AbstractWrapper
     {
+        // Network skins
+        internal static NS_Manager NS;
+
+        // Properties
+
         private WrappedNode _startNode;
         public WrappedNode StartNode
         {
@@ -67,6 +73,11 @@ namespace SharedEnvironment
             set => _netInfoIndex = IsCreated() ? throw new WrapperException("Cannot modify built segment") : NetUtil.NetinfoToIndex(value);
         }
 
+        // Network skins integration
+        public object NS_Modifiers { get; set; }
+
+        // -- properties end
+
         public ref NetSegment Get
         {
             get => ref NetUtil.Segment(Id);
@@ -79,6 +90,7 @@ namespace SharedEnvironment
             if (!IsCreated())
             {
                 _id = NetUtil.CreateSegment(_startNode.Id, _endNode.Id, _startDir, _endDir, NetInfo, _invert, _switchStartAndEnd, _deployPlacementEffects);
+                try { NS.SetSegmentModifiers(_id, NS_Modifiers, NetInfo); } catch { }
             }
 
             return true;
@@ -127,6 +139,7 @@ namespace SharedEnvironment
             _endDir = NetUtil.Segment(_id).m_endDirection;
             _netInfoIndex = NetUtil.Segment(_id).m_infoIndex;
             _invert = (NetUtil.Segment(_id).m_flags & NetSegment.Flags.Invert) != NetSegment.Flags.None;
+            try { NS_Modifiers = NS.GetSegmentModifiers(_id); } catch { }
         }
 
         // Constructors

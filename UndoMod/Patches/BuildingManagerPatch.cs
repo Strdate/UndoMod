@@ -4,6 +4,7 @@ using Redirection;
 using SharedEnvironment;
 using System;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using UndoMod.Utils;
 using UnityEngine;
 
@@ -18,28 +19,26 @@ namespace UndoMod.Patches
         //public static RedirectCallsState releaseBuildingState;
 
         private static MethodInfo createBuilding_original = typeof(BuildingManager).GetMethod("CreateBuilding");
-        private static MethodInfo createBuilding_patch = typeof(BuildingManagerPatch).GetMethod("CreateBuilding", BindingFlags.NonPublic | BindingFlags.Instance);
-        public static RedirectCallsState createBuildingState;
+        private static MethodInfo createBuilding_prefix = typeof(BuildingManagerPatch).GetMethod("CreateBuilding_Prefix", BindingFlags.NonPublic | BindingFlags.Static);
+        private static MethodInfo createBuilding_postfix = typeof(BuildingManagerPatch).GetMethod("CreateBuilding_Postfix", BindingFlags.NonPublic | BindingFlags.Static);
 
         private static MethodInfo relocateBuilding_original = typeof(BuildingManager).GetMethod("RelocateBuilding");
-        private static MethodInfo relocateBuilding_patch = typeof(BuildingManagerPatch).GetMethod("RelocateBuilding", BindingFlags.NonPublic | BindingFlags.Instance);
-        public static RedirectCallsState relocateBuildingState;
+        private static MethodInfo relocateBuilding_postfix = typeof(BuildingManagerPatch).GetMethod("RelocateBuilding_Postfix", BindingFlags.NonPublic | BindingFlags.Static);
 
         public static void Patch(HarmonyInstance _harmony)
         {
-            //releaseBuildingState = RedirectionHelper.RedirectCalls(releaseBuilding_original, releaseBuilding_patch);
             _harmony.Patch(releaseBuilding_original, new HarmonyMethod(releaseBuilding_prefix), new HarmonyMethod(releaseBuilding_postfix));
-            createBuildingState = RedirectionHelper.RedirectCalls(createBuilding_original, createBuilding_patch);
-            relocateBuildingState = RedirectionHelper.RedirectCalls(relocateBuilding_original, relocateBuilding_patch);
+            _harmony.Patch(createBuilding_original, new HarmonyMethod(createBuilding_prefix), new HarmonyMethod(createBuilding_postfix));
+            _harmony.Patch(relocateBuilding_original, null, new HarmonyMethod(relocateBuilding_postfix));
         }
 
         public static void Unpatch(HarmonyInstance _harmony)
         {
-            RedirectionHelper.RevertRedirect(relocateBuilding_original, relocateBuildingState);
-            RedirectionHelper.RevertRedirect(createBuilding_original, createBuildingState);
+            _harmony.Unpatch(relocateBuilding_original, relocateBuilding_postfix);
+            _harmony.Unpatch(createBuilding_original, createBuilding_prefix);
+            _harmony.Unpatch(createBuilding_original, createBuilding_postfix);
             _harmony.Unpatch(releaseBuilding_original, releaseBuilding_prefix);
             _harmony.Unpatch(releaseBuilding_original, releaseBuilding_postfix);
-            //RedirectionHelper.RevertRedirect(releaseBuilding_original, releaseBuildingState);
         }
 
         private static void ReleaseBuilding_Prefix(ushort building)
@@ -77,22 +76,33 @@ namespace UndoMod.Patches
             UndoMod.Instsance.ObservingOnlyBuildings--;
         }
 
-        private bool CreateBuilding(out ushort building, ref Randomizer randomizer, BuildingInfo info, Vector3 position, float angle, int length, uint buildIndex)
+        private static void CreateBuilding_Prefix()
         {
-            bool result;
-            //Debug.Log("redirect");
             UndoMod.Instsance.ObservingOnlyBuildings++;
-            RedirectionHelper.RevertRedirect(createBuilding_original, createBuildingState);
-            try
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static bool CheckCaller()
+        {
+            System.Diagnostics.StackTrace stackTrace = new System.Diagnostics.StackTrace();
+            System.Diagnostics.StackFrame[] frames = stackTrace.GetFrames();
+
+            for(int i = 3; i <= 4; i++)
             {
-                result = BuildingManager.instance.CreateBuilding(out building, ref randomizer, info, position, angle, length, buildIndex);
-            } finally
-            {
-                createBuildingState = RedirectionHelper.RedirectCalls(createBuilding_original, createBuilding_patch);
-                UndoMod.Instsance.ObservingOnlyBuildings--;
+                if(frames[i].GetMethod().Name == "UpdateBuilding" && frames[i].GetMethod().DeclaringType == typeof(NetNode))
+                {
+                    Debug.Log("Wrong caller!!");
+                    return false;
+                }
             }
 
-            if (result && !UndoMod.Instsance.PerformingAction && !UndoMod.Instsance.Invalidated)
+            return true;
+        }
+
+        private static void CreateBuilding_Postfix(bool __result, ref ushort building)
+        {
+            UndoMod.Instsance.ObservingOnlyBuildings--;
+            if (__result && !UndoMod.Instsance.PerformingAction && !UndoMod.Instsance.Invalidated && CheckCaller())
             {
                 if (UndoMod.Instsance.Observing)
                 {
@@ -112,63 +122,11 @@ namespace UndoMod.Patches
                     //Invalidator.Instance.InvalidBuildings.Add(building);
                 }
             }
-
-            return result;
         }
 
-        private void RelocateBuilding(ushort building, Vector3 position, float angle)
+        private static void RelocateBuilding_Postfix()
         {
-            RedirectionHelper.RevertRedirect(relocateBuilding_original, relocateBuildingState);
-            relocateBuildingState = RedirectionHelper.RedirectCalls(relocateBuilding_patch, relocateBuilding_original);
-            try
-            {
-                RelocateBuilding(building, position, angle);
-            } finally
-            {
-                RedirectionHelper.RevertRedirect(relocateBuilding_patch, relocateBuildingState);
-                relocateBuildingState = RedirectionHelper.RedirectCalls(relocateBuilding_original, relocateBuilding_patch);
-            }
             UndoMod.Instsance.InvalidateAll(false);
         }
-
-        /*private void ReleaseBuilding(ushort building)
-        {
-            //Debug.Log("redirect");
-            ref Building data = ref ManagerUtils.BuildingS(building);
-            if ((data.m_flags != Building.Flags.None && (data.m_flags & Building.Flags.Deleted) == Building.Flags.None) && !UndoMod.Instsance.PerformingAction && !UndoMod.Instsance.Invalidated)
-            {
-                if (UndoMod.Instsance.Observing)
-                {
-                    try
-                    {
-                        var constructable = UndoMod.Instsance.WrappersDictionary.RegisterBuilding(building);
-                        constructable.ForceSetId(0);
-                        UndoMod.Instsance.ReportObservedAction(new ActionRelease(constructable));
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.Log(e);
-                        UndoMod.Instsance.InvalidateAll();
-                    }
-                }
-                else
-                {
-                    //Invalidator.Instance.InvalidBuildings.Add(building);
-                }
-            }
-
-            UndoMod.Instsance.ObservingOnlyBuildings = true;
-            //RedirectionHelper.RevertRedirect(releaseBuilding_original, releaseBuildingState);
-            try
-            {
-                //BuildingManager.instance.ReleaseBuilding(building);
-                ReleaseBuildingOriginal(building);
-            }
-            finally
-            {
-                //releaseBuildingState = RedirectionHelper.RedirectCalls(releaseBuilding_original, releaseBuilding_patch);
-                UndoMod.Instsance.ObservingOnlyBuildings = false;
-            }
-        }*/
     }
 }
