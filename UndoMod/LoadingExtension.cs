@@ -44,6 +44,8 @@ namespace UndoMod
                 {
                     try { WrappedSegment.NS = new NS_Manager(); } catch(Exception e) { Debug.LogError(e); }
                 }
+
+                m_detoured = true;
             }
             catch (Exception e)
             {
@@ -64,7 +66,7 @@ namespace UndoMod
             if(HarmonyHelper.IsHarmonyInstalled) {
                 Patcher.UnpatchAll();
             }
-            
+            m_detoured = false;
             UndoMod.Instsance.InvalidateAll(false);
         }
 

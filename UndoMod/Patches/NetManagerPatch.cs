@@ -8,8 +8,8 @@ using UnityEngine;
 
 namespace UndoMod.Patches
 {
-    [HarmonyPatch(typeof(NetManager))]
-    [HarmonyPatch("PreReleaseSegmentImplementation")]
+    //[HarmonyPatch(typeof(NetManager))]
+    //[HarmonyPatch("PreReleaseSegmentImplementation", new Type[] { typeof(ushort), typeof(NetSegment)/*.MakeByRefType()*/, typeof(bool) })]
     class NetManagerPatch_PreReleaseSegmentImplementation
     {
         static void Prefix(ushort segment)
@@ -30,10 +30,23 @@ namespace UndoMod.Patches
                 }
             }
         }
+
+        private static MethodInfo releaseSegment_original = typeof(NetManager).GetMethod("PreReleaseSegmentImplementation", BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[] { typeof(ushort), typeof(NetSegment).MakeByRefType(), typeof(bool) }, null);
+        private static MethodInfo releaseSegment_prefix = typeof(NetManagerPatch_PreReleaseSegmentImplementation).GetMethod("Prefix", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static);
+
+        internal static void ManualPatch(Harmony _harmony)
+        {
+            _harmony.Patch(releaseSegment_original, new HarmonyMethod(releaseSegment_prefix));
+        }
+
+        internal static void ManualUnpatch(Harmony _harmony)
+        {
+            _harmony.Unpatch(releaseSegment_original, releaseSegment_prefix);
+        }
     }
 
-    [HarmonyPatch(typeof(NetManager))]
-    [HarmonyPatch("PreReleaseNodeImplementation")]
+    //[HarmonyPatch(typeof(NetManager))]
+    //[HarmonyPatch("PreReleaseNodeImplementation", new Type[] { typeof(ushort), typeof(NetNode)/*.MakeByRefType()*/, typeof(bool), typeof(bool) })]
     class NetManagerPatch_PreReleaseNodeImplementation
     {
         static void Prefix(out WrappedNode __state, ushort node, ref NetNode data, bool checkDeleted, bool checkTouchable)
@@ -77,6 +90,21 @@ namespace UndoMod.Patches
                 Debug.Log(e);
                 UndoMod.Instsance.InvalidateAll();
             }
+        }
+
+        private static MethodInfo releaseNode_original = typeof(NetManager).GetMethod("PreReleaseNodeImplementation", BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[] { typeof(ushort), typeof(NetNode).MakeByRefType(), typeof(bool), typeof(bool) }, null);
+        private static MethodInfo releaseNode_prefix = typeof(NetManagerPatch_PreReleaseNodeImplementation).GetMethod("Prefix", BindingFlags.NonPublic | BindingFlags.Static);
+        private static MethodInfo releaseNode_postfix = typeof(NetManagerPatch_PreReleaseNodeImplementation).GetMethod("Postfix", BindingFlags.NonPublic | BindingFlags.Static);
+
+        internal static void ManualPatch(Harmony _harmony)
+        {
+            _harmony.Patch(original: releaseNode_original, prefix: new HarmonyMethod(releaseNode_prefix), finalizer: new HarmonyMethod(releaseNode_postfix));
+        }
+
+        internal static void ManualUnpatch(Harmony _harmony)
+        {
+            _harmony.Unpatch(releaseNode_original, releaseNode_prefix);
+            _harmony.Unpatch(releaseNode_original, releaseNode_postfix);
         }
 
         // semi stock code

@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using System.ComponentModel;
 using System.Linq;
 using UndoMod.Patches;
 using UnityEngine;
@@ -18,7 +19,9 @@ namespace UndoMod
             patched = true;
 
             _harmony.PatchAll(typeof(Patcher).Assembly);
-            if( Enumerable.Count(_harmony.GetPatchedMethods()) != 20) {
+            NetManagerPatch_PreReleaseSegmentImplementation.ManualPatch(_harmony);
+            NetManagerPatch_PreReleaseNodeImplementation.ManualPatch(_harmony);
+            if ( Enumerable.Count(_harmony.GetPatchedMethods()) != 20) {
                 throw new System.Exception("Wrong number of methods were patched");
             }
         }
@@ -29,8 +32,6 @@ namespace UndoMod
 
             var _harmony = new Harmony(HarmonyID);
             _harmony.UnpatchAll(HarmonyID);
-            /*NetManagerPatch.Unpatch(_harmony);
-            NetToolPatch.Unpatch(_harmony);*/
 
             patched = false;
         }
