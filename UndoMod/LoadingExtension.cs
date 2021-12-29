@@ -16,6 +16,7 @@ namespace UndoMod
         private static LoadingExtension _instance;
         public static LoadingExtension Instsance { get => _instance; }
 
+        public bool m_detoured = false;
         public bool m_inStandardGame = false;
 
         public LoadingExtension()

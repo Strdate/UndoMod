@@ -37,7 +37,7 @@ namespace UndoMod.Patches
     [HarmonyPatch("CreateProp")]
     class PropManagerPatch_CreateProp
     {
-        static void Postfix(bool __result, ushort prop)
+        static void Postfix(bool __result, ref ushort prop)
         {
             if (__result && PatchUtil.CheckIfObserving()) {
                 if (UndoMod.Instsance.Observing) {
@@ -53,14 +53,6 @@ namespace UndoMod.Patches
                     //Invalidator.Instance.InvalidProps.Add(prop);
                 }
             }
-        }
-    }
-
-    class PatchUtil
-    {
-        internal static bool CheckIfObserving()
-        {
-            return !UndoMod.Instsance.PerformingAction && !UndoMod.Instsance.Invalidated && UndoMod.Instsance.ObservingOnlyBuildings == 0;
         }
     }
 }

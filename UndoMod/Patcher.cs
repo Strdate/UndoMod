@@ -1,10 +1,7 @@
 ﻿using HarmonyLib;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UndoMod.Patches;
+using UnityEngine;
 
 namespace UndoMod
 {
@@ -19,20 +16,11 @@ namespace UndoMod
 
             var _harmony = new Harmony(HarmonyID);
             patched = true;
-            
 
-            /*NetToolPatch.Patch(_harmony);
-            NetManagerPatch.Patch(_harmony);*/
-
-            BulldozeToolPatch.Patch();
-            TreeToolPatch.Patch();
-            PropToolPatch.Patch();
-            NetToolPatch.Patch();
-            BuildingToolPatch.Patch();
-            TreeManagerPatch.Patch();
-            PropManagerPatch.Patch();
-            NetManagerPatch.Patch(_harmony);
-            BuildingManagerPatch.Patch(_harmony);
+            _harmony.PatchAll(typeof(Patcher).Assembly);
+            if( Enumerable.Count(_harmony.GetPatchedMethods()) != 20) {
+                throw new System.Exception("Wrong number of methods were patched");
+            }
         }
 
         public static void UnpatchAll()
@@ -40,16 +28,7 @@ namespace UndoMod
             if (!patched) return;
 
             var _harmony = new Harmony(HarmonyID);
-
-            BuildingManagerPatch.Unpatch(_harmony);
-            NetManagerPatch.Unpatch(_harmony);
-            PropManagerPatch.Unpatch();
-            BuildingToolPatch.Unpatch();
-            TreeManagerPatch.Unpatch();
-            NetToolPatch.Unpatch();
-            PropToolPatch.Unpatch();
-            TreeToolPatch.Unpatch();
-            BulldozeToolPatch.Unpatch();
+            _harmony.UnpatchAll(HarmonyID);
             /*NetManagerPatch.Unpatch(_harmony);
             NetToolPatch.Unpatch(_harmony);*/
 

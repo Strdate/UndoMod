@@ -35,7 +35,7 @@ namespace UndoMod.Patches
     [HarmonyPatch("CreateTree")]
     class TreeManagerPatch_CreateTree
     {
-        static void Postfix(bool __result, uint tree)
+        static void Postfix(bool __result, ref uint tree)
         {
             if (__result && PatchUtil.CheckIfObserving()) {
                 if (UndoMod.Instsance.Observing) {

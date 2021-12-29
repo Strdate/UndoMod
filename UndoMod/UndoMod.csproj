@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>UndoMod</RootNamespace>
     <AssemblyName>UndoMod</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
     <TargetFrameworkProfile />
@@ -75,6 +75,7 @@
     <Compile Include="Patches\BulldozeToolPatch.cs" />
     <Compile Include="Patches\NetManagerPatch.cs" />
     <Compile Include="Patches\NetToolPatch.cs" />
+    <Compile Include="Patches\PatchUtil.cs" />
     <Compile Include="Patches\PropManagerPatch.cs" />
     <Compile Include="Patches\PropToolPatch.cs" />
     <Compile Include="Patches\TreeManagerPatch.cs" />

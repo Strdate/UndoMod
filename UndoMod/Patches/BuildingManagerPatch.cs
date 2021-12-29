@@ -9,121 +9,72 @@ using UnityEngine;
 
 namespace UndoMod.Patches
 {
-    public class BuildingManagerPatch
+    [HarmonyPatch(typeof(BuildingManager))]
+    [HarmonyPatch("ReleaseBuilding")]
+    class BuildingManagerPatch_ReleaseBuilding
     {
-        private static MethodInfo releaseBuilding_original = typeof(BuildingManager).GetMethod("ReleaseBuilding");
-        //private static MethodInfo releaseBuilding_patch = typeof(BuildingManagerPatch).GetMethod("ReleaseBuilding", BindingFlags.NonPublic | BindingFlags.Instance);
-        private static MethodInfo releaseBuilding_prefix = typeof(BuildingManagerPatch).GetMethod("ReleaseBuilding_Prefix", BindingFlags.NonPublic | BindingFlags.Static);
-        private static MethodInfo releaseBuilding_postfix = typeof(BuildingManagerPatch).GetMethod("ReleaseBuilding_Postfix", BindingFlags.NonPublic | BindingFlags.Static);
-        //public static RedirectCallsState releaseBuildingState;
-
-        private static MethodInfo createBuilding_original = typeof(BuildingManager).GetMethod("CreateBuilding");
-        private static MethodInfo createBuilding_prefix = typeof(BuildingManagerPatch).GetMethod("CreateBuilding_Prefix", BindingFlags.NonPublic | BindingFlags.Static);
-        private static MethodInfo createBuilding_postfix = typeof(BuildingManagerPatch).GetMethod("CreateBuilding_Postfix", BindingFlags.NonPublic | BindingFlags.Static);
-
-        private static MethodInfo relocateBuilding_original = typeof(BuildingManager).GetMethod("RelocateBuilding");
-        private static MethodInfo relocateBuilding_postfix = typeof(BuildingManagerPatch).GetMethod("RelocateBuilding_Postfix", BindingFlags.NonPublic | BindingFlags.Static);
-
-        public static void Patch(Harmony _harmony)
+        static void Prefix(ushort building)
         {
-            _harmony.Patch(original: releaseBuilding_original, prefix: new HarmonyMethod(releaseBuilding_prefix), finalizer: new HarmonyMethod(releaseBuilding_postfix));
-            _harmony.Patch(original: createBuilding_original, prefix: new HarmonyMethod(createBuilding_prefix), finalizer: new HarmonyMethod(createBuilding_postfix));
-            _harmony.Patch(original: relocateBuilding_original, postfix: new HarmonyMethod(relocateBuilding_postfix));
-        }
-
-        public static void Unpatch(Harmony _harmony)
-        {
-            _harmony.Unpatch(relocateBuilding_original, relocateBuilding_postfix);
-            _harmony.Unpatch(createBuilding_original, createBuilding_prefix);
-            _harmony.Unpatch(createBuilding_original, createBuilding_postfix);
-            _harmony.Unpatch(releaseBuilding_original, releaseBuilding_prefix);
-            _harmony.Unpatch(releaseBuilding_original, releaseBuilding_postfix);
-        }
-
-        private static void ReleaseBuilding_Prefix(ushort building)
-        {
-            //Debug.Log("ReleaseBuilding Prefix! " + building);
+            UndoMod.Instsance.ObservingOnlyBuildings++;
             ref Building data = ref ManagerUtils.BuildingS(building);
             if ((data.m_flags != Building.Flags.None && (data.m_flags & Building.Flags.Deleted) == Building.Flags.None) && !UndoMod.Instsance.PerformingAction
-                    && !UndoMod.Instsance.Invalidated)
-            {
-                if (UndoMod.Instsance.Observing)
-                {
-                    try
-                    {
+                    && !UndoMod.Instsance.Invalidated) {
+                if (UndoMod.Instsance.Observing) {
+                    try {
                         var constructable = UndoMod.Instsance.WrappersDictionary.RegisterBuilding(building);
                         constructable.ForceSetId(0);
                         UndoMod.Instsance.ReportObservedAction(new ActionRelease(constructable));
                     }
-                    catch (Exception e)
-                    {
+                    catch (Exception e) {
                         Debug.Log(e);
                         UndoMod.Instsance.InvalidateAll();
                     }
-                }
-                else
-                {
+                } else {
                     //Invalidator.Instance.InvalidBuildings.Add(building);
                 }
             }
-
-            UndoMod.Instsance.ObservingOnlyBuildings++;
         }
 
-        private static void ReleaseBuilding_Postfix()
+        static void Finalizer()
         {
             UndoMod.Instsance.ObservingOnlyBuildings--;
         }
+    }
 
-        private static void CreateBuilding_Prefix()
+    [HarmonyPatch(typeof(BuildingManager))]
+    [HarmonyPatch("CreateBuilding")]
+    class BuildingManagerPatch_CreateBuilding
+    {
+        static void Prefix()
         {
             UndoMod.Instsance.ObservingOnlyBuildings++;
         }
 
-        /*[MethodImpl(MethodImplOptions.NoInlining)]
-        private static bool CheckCaller()
-        {
-            System.Diagnostics.StackTrace stackTrace = new System.Diagnostics.StackTrace();
-            System.Diagnostics.StackFrame[] frames = stackTrace.GetFrames();
-
-            for(int i = 3; i <= 4; i++)
-            {
-                if(frames[i].GetMethod().Name == "UpdateBuilding" && frames[i].GetMethod().DeclaringType == typeof(NetNode))
-                {
-                    Debug.Log("Wrong caller!!");
-                    return false;
-                }
-            }
-
-            return true;
-        }*/
-
-        private static void CreateBuilding_Postfix(bool __result, ref ushort building)
+        static void Finalizer(bool __result, ref ushort building, Exception __exception)
         {
             UndoMod.Instsance.ObservingOnlyBuildings--;
-            if (__result && !UndoMod.Instsance.PerformingAction && !UndoMod.Instsance.Invalidated /*&& CheckCaller()*/)
-            {
-                if (UndoMod.Instsance.Observing)
-                {
-                    try
-                    {
+            if (__result && __exception == null && !UndoMod.Instsance.PerformingAction && !UndoMod.Instsance.Invalidated /*&& CheckCaller()*/) {
+                if (UndoMod.Instsance.Observing) {
+                    try {
                         var constructable = UndoMod.Instsance.WrappersDictionary.RegisterBuilding(building);
                         UndoMod.Instsance.ReportObservedAction(new ActionCreate(constructable));
                     }
-                    catch (Exception e)
-                    {
+                    catch (Exception e) {
                         Debug.Log(e);
                         UndoMod.Instsance.InvalidateAll();
                     }
-                }
-                else
-                {
+                } else {
                     //Invalidator.Instance.InvalidBuildings.Add(building);
                 }
             }
         }
+    }
 
-        private static void RelocateBuilding_Postfix()
+    [HarmonyPatch(typeof(BuildingManager))]
+    [HarmonyPatch("RelocateBuilding")]
+    class BuildingManagerPatch_RelocateBuilding
+    {
+        static void Postfix()
         {
             UndoMod.Instsance.InvalidateAll(false);
         }
