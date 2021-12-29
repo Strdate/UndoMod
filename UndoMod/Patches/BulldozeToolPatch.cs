@@ -1,132 +1,80 @@
-﻿using ColossalFramework;
-using Redirection;
+﻿using HarmonyLib;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using UnityEngine;
-
 namespace UndoMod.Patches
 {
-    public class PatchInst
+    [HarmonyPatch(typeof(BulldozeTool))]
+    [HarmonyPatch("DeleteSegmentImpl")]
+    class BulldozeToolPatch_DeleteSegmentImpl
     {
-        public string mehtodName;
-        public MethodInfo original;
-        public MethodInfo patch;
-        public RedirectCallsState state;
-
-        public PatchInst(string name)
+        static void Prefix()
         {
-            mehtodName = name;
-            original = typeof(BulldozeTool).GetMethod(name, BindingFlags.NonPublic | BindingFlags.Instance);
-            patch = typeof(BulldozeToolPatch).GetMethod(name, BindingFlags.NonPublic | BindingFlags.Instance);
+            UndoMod.Instsance.BeginObserving("Remove segment");
         }
 
-        public void Patch()
+        static void Finalizer(Exception __exception)
         {
-            state = RedirectionHelper.RedirectCalls(original, patch);
-        }
-
-        public void Unpatch()
-        {
-            RedirectionHelper.RevertRedirect(original, state);
-        }
-
-        public void Swap()
-        {
-            Unpatch();
-            state = RedirectionHelper.RedirectCalls(patch, original);
-        }
-
-        public void Unswap()
-        {
-            RedirectionHelper.RevertRedirect(patch, state);
-            Patch();
-        }
-
-        public static implicit operator PatchInst(string name)
-        {
-            var instance = new PatchInst(name);
-
-            return instance;
+            UndoMod.Instsance.FinalizeObserving(__exception);
         }
     }
 
-    public class BulldozeToolPatch
+    [HarmonyPatch(typeof(BulldozeTool))]
+    [HarmonyPatch("DeleteNodeImpl")]
+    class BulldozeToolPatch_DeleteNodeImpl
     {
-        public static PatchInst[] patches = { "DeleteSegmentImpl", "DeleteNodeImpl", "DeleteBuildingImpl", "DeleteTreeImpl", "DeletePropImpl" };
-
-        public static void Patch()
+        static void Prefix()
         {
-            foreach(var patch in patches)
-            {
-                patch.Patch();
-            }
+            UndoMod.Instsance.BeginObserving("Remove node");
         }
 
-        public static void Unpatch()
+        static void Finalizer(Exception __exception)
         {
-            foreach (var patch in patches)
-            {
-                patch.Unpatch();
-            }
+            UndoMod.Instsance.FinalizeObserving(__exception);
+        }
+    }
+
+    [HarmonyPatch(typeof(BulldozeTool))]
+    [HarmonyPatch("DeleteBuildingImpl")]
+    class BulldozeToolPatch_DeleteBuildingImpl
+    {
+        static void Prefix()
+        {
+            UndoMod.Instsance.BeginObserving("Remove building");
         }
 
-        private void DeleteSegmentImpl(ushort segment)
+        static void Finalizer(Exception __exception)
         {
-            var patch = patches[0];
+            UndoMod.Instsance.FinalizeObserving(__exception);
+        }
+    }
 
-            UndoMod.Instsance.BeginObserving("Remove segment", "Vanilla");
-            patch.Swap();
-            DeleteSegmentImpl(segment);
-            patch.Unswap();
-            UndoMod.Instsance.EndObserving();
+    [HarmonyPatch(typeof(BulldozeTool))]
+    [HarmonyPatch("DeleteTreeImpl")]
+    class BulldozeToolPatch_DeleteTreeImpl
+    {
+        static void Prefix()
+        {
+            UndoMod.Instsance.BeginObserving("Remove tree");
         }
 
-        private void DeleteNodeImpl(ushort node)
+        static void Finalizer(Exception __exception)
         {
-            var patch = patches[1];
+            UndoMod.Instsance.FinalizeObserving(__exception);
+        }
+    }
 
-            UndoMod.Instsance.BeginObserving("Remove node", "Vanilla");
-            patch.Swap();
-            DeleteNodeImpl(node);
-            patch.Unswap();
-            UndoMod.Instsance.EndObserving();
+    [HarmonyPatch(typeof(BulldozeTool))]
+    [HarmonyPatch("DeletePropImpl")]
+    class BulldozeToolPatch_DeletePropImpl
+    {
+        static void Prefix()
+        {
+            UndoMod.Instsance.BeginObserving("DeletePropImpl");
         }
 
-        private void DeleteBuildingImpl(ushort building)
+        static void Finalizer(Exception __exception)
         {
-            var patch = patches[2];
-
-            UndoMod.Instsance.BeginObserving("Remove building"/*, true*/, "Vanilla");
-            patch.Swap();
-            DeleteBuildingImpl(building);
-            patch.Unswap();
-            UndoMod.Instsance.EndObserving();
+            UndoMod.Instsance.FinalizeObserving(__exception);
         }
-
-        private void DeleteTreeImpl(uint tree)
-        {
-            var patch = patches[3];
-
-            UndoMod.Instsance.BeginObserving("Remove tree", "Vanilla");
-            patch.Swap();
-            DeleteTreeImpl(tree);
-            patch.Unswap();
-            UndoMod.Instsance.EndObserving();
-        }
-
-        private void DeletePropImpl(ushort prop)
-        {
-            var patch = patches[4];
-
-            UndoMod.Instsance.BeginObserving("Remove prop", "Vanilla");
-            patch.Swap();
-            DeletePropImpl(prop);
-            patch.Unswap();
-            UndoMod.Instsance.EndObserving();
-        }
-
     }
 }

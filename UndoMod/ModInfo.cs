@@ -1,4 +1,5 @@
-﻿using ColossalFramework;
+﻿using CitiesHarmony.API;
+using ColossalFramework;
 using ColossalFramework.UI;
 using ICities;
 using System;
@@ -12,7 +13,7 @@ namespace UndoMod
 {
     public class ModInfo : IUserMod
     {
-        public static readonly string VERSION = "BETA 0.2.0";
+        public static readonly string VERSION = "BETA 0.3.0";
         public const string settingsFileName = "UndoMod";
 
         public string Name => "Undo It!";
@@ -42,6 +43,11 @@ namespace UndoMod
                 Debug.Log("Couldn't load/create the setting file.");
                 Debug.LogException(e);
             }
+        }
+
+        public void OnEnabled()
+        {
+            HarmonyHelper.EnsureHarmonyInstalled();
         }
 
         public void OnSettingsUI(UIHelperBase helper)

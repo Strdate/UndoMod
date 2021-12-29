@@ -68,7 +68,7 @@ namespace UndoMod
             }
         }
 
-        public void BeginObserving(string actionName/*, bool onlyBuildings = false*/, string modname, bool autoObserving = false)
+        public void BeginObserving(string actionName/*, bool onlyBuildings = false*/, string modname = "Vanilla", bool autoObserving = false)
         {
             if(!LoadingExtension.Instsance.m_detoured)
             {
@@ -89,6 +89,15 @@ namespace UndoMod
             Observing = true;
             Invalidated = false;
             //ObservingOnlyBuildings = onlyBuildings;
+        }
+
+        public void FinalizeObserving(Exception e)
+        {
+            if (e != null) {
+                Debug.LogError(e);
+                InvalidateAll();
+            }
+            EndObserving();
         }
 
         public void EndObserving()
@@ -122,14 +131,6 @@ namespace UndoMod
             ObservingOnlyBuildings = 0;
             Invalidated = true;
         }
-
-        /*public void InvalidateQueue()
-        {
-            Debug.LogWarning("Invalidate queue");
-            Queue.Clear();
-            //Invalidator.Instance.Clear();
-            WrappersDictionary.CollectGarbage(force: true);
-        }*/
 
         public void Undo()
         {

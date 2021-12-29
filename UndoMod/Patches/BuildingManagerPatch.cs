@@ -1,6 +1,5 @@
 ﻿using ColossalFramework.Math;
-using Harmony;
-using Redirection;
+using HarmonyLib;
 using SharedEnvironment;
 using System;
 using System.Reflection;
@@ -25,14 +24,14 @@ namespace UndoMod.Patches
         private static MethodInfo relocateBuilding_original = typeof(BuildingManager).GetMethod("RelocateBuilding");
         private static MethodInfo relocateBuilding_postfix = typeof(BuildingManagerPatch).GetMethod("RelocateBuilding_Postfix", BindingFlags.NonPublic | BindingFlags.Static);
 
-        public static void Patch(HarmonyInstance _harmony)
+        public static void Patch(Harmony _harmony)
         {
-            _harmony.Patch(releaseBuilding_original, new HarmonyMethod(releaseBuilding_prefix), new HarmonyMethod(releaseBuilding_postfix));
-            _harmony.Patch(createBuilding_original, new HarmonyMethod(createBuilding_prefix), new HarmonyMethod(createBuilding_postfix));
-            _harmony.Patch(relocateBuilding_original, null, new HarmonyMethod(relocateBuilding_postfix));
+            _harmony.Patch(original: releaseBuilding_original, prefix: new HarmonyMethod(releaseBuilding_prefix), finalizer: new HarmonyMethod(releaseBuilding_postfix));
+            _harmony.Patch(original: createBuilding_original, prefix: new HarmonyMethod(createBuilding_prefix), finalizer: new HarmonyMethod(createBuilding_postfix));
+            _harmony.Patch(original: relocateBuilding_original, postfix: new HarmonyMethod(relocateBuilding_postfix));
         }
 
-        public static void Unpatch(HarmonyInstance _harmony)
+        public static void Unpatch(Harmony _harmony)
         {
             _harmony.Unpatch(relocateBuilding_original, relocateBuilding_postfix);
             _harmony.Unpatch(createBuilding_original, createBuilding_prefix);

@@ -1,6 +1,5 @@
 ﻿using ColossalFramework.Math;
-using Harmony;
-using Redirection;
+using HarmonyLib;
 using SharedEnvironment;
 using System;
 using System.Reflection;
@@ -19,16 +18,16 @@ namespace UndoMod.Patches
 
         private static MethodInfo createNode_original = typeof(NetManager).GetMethod("CreateNode");
 
-        public static void Patch(HarmonyInstance _harmony)
+        public static void Patch(Harmony _harmony)
         {
             //Debug.LogWarning(releaseNode_prefix + " " + releaseNode_postfix);
-            _harmony.Patch(releaseNode_original, new HarmonyMethod(releaseNode_prefix), new HarmonyMethod(releaseNode_postfix));
+            _harmony.Patch(original: releaseNode_original, prefix: new HarmonyMethod(releaseNode_prefix), finalizer: new HarmonyMethod(releaseNode_postfix));
             _harmony.Patch(createNode_original, null, new HarmonyMethod(createNode_postfix));
             _harmony.Patch(releaseSegment_original, new HarmonyMethod(releaseSegment_prefix));
             _harmony.Patch(createSegment_original, null, new HarmonyMethod(createSegment_postfix));
         }
 
-        public static void Unpatch(HarmonyInstance _harmony)
+        public static void Unpatch(Harmony _harmony)
         {
             _harmony.Unpatch(releaseNode_original, releaseNode_prefix);
             _harmony.Unpatch(releaseNode_original, releaseNode_postfix);
@@ -76,22 +75,6 @@ namespace UndoMod.Patches
 
         //private static MethodInfo createNode_original = typeof(NetManager).GetMethod("CreateNode");
         private static MethodInfo createNode_postfix = typeof(NetManagerPatch).GetMethod("CreateNode_postfix", BindingFlags.NonPublic | BindingFlags.Static);
-
-        /*public static void Patch(HarmonyInstance _harmony)
-        {
-            _harmony.Patch(releaseSegment_original, new HarmonyMethod( releaseSegment_prefix ));
-            _harmony.Patch(releaseNode_original, new HarmonyMethod(releaseNode_prefix));
-            _harmony.Patch(createSegment_original, null, new HarmonyMethod(createSegment_postfix));
-            _harmony.Patch(createNode_original, null, new HarmonyMethod(createNode_postfix));
-        }
-
-        public static void Unpatch(HarmonyInstance _harmony)
-        {
-            _harmony.Unpatch(releaseSegment_original, releaseSegment_prefix);
-            _harmony.Unpatch(releaseNode_original, releaseNode_prefix);
-            _harmony.Unpatch(createSegment_original, createSegment_postfix);
-            _harmony.Unpatch(createNode_original, createNode_postfix);
-        }*/
 
         private static void ReleaseSegment_prefix(ushort segment, ref NetSegment data, bool keepNodes)
         {
