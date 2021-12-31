@@ -16,6 +16,8 @@ namespace SharedEnvironment
 
         public bool AutoObserving { get; set; }
 
+        public bool AutoTerminate { get; set; }
+
         public List<IGameAction> Actions = new List<IGameAction>();
 
         public int DoCost { get; set; }

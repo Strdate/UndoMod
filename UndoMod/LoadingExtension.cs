@@ -38,7 +38,7 @@ namespace UndoMod
 
             try
             {
-                Patcher.PatchAll();
+                Patcher.PatchAll(EMLCompatibility());
 
                 if(WrappedSegment.NS == null)
                 {
@@ -59,6 +59,11 @@ namespace UndoMod
         {
             ExceptionPanel panel = UIView.library.ShowModal<ExceptionPanel>("ExceptionPanel");
             panel.SetMessage("Undo It!", msg, true);
+        }
+
+        private static bool EMLCompatibility()
+        {
+            return Type.GetType("EManagersLib.EModule") != null;
         }
 
         public void OnLevelUnloading()

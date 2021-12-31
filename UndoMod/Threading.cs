@@ -23,7 +23,9 @@ namespace UndoMod
                 if(!_processed)
                 {
                     if(CheckCurrentTool())
-                        UndoMod.Instsance.Undo();
+                        Singleton<SimulationManager>.instance.AddAction(() => {
+                            UndoMod.Instsance.Undo();
+                        });
                     _processed = true;
                 }
             } else if (ModInfo.sc_redo.IsPressed())
@@ -31,7 +33,9 @@ namespace UndoMod
                 if (!_processed)
                 {
                     if (CheckCurrentTool())
-                        UndoMod.Instsance.Redo();
+                        Singleton<SimulationManager>.instance.AddAction(() => {
+                            UndoMod.Instsance.Redo();
+                        });
                     _processed = true;
                 }
             }

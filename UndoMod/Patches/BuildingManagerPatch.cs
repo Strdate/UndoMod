@@ -67,6 +67,9 @@ namespace UndoMod.Patches
                     //Invalidator.Instance.InvalidBuildings.Add(building);
                 }
             }
+            if (UndoMod.Instsance.ObservingOnlyBuildings == 0) {
+                UndoMod.Instsance.TerminateObservingIfVanilla();
+            }
         }
     }
 

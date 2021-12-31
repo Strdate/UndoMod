@@ -62,13 +62,20 @@ namespace UndoMod
                     {
                         System.Diagnostics.StackTrace stackTrace = new System.Diagnostics.StackTrace();
                         System.Diagnostics.StackFrame[] stackFrames = stackTrace.GetFrames();
-                        ObservedItem.ModName = stackFrames[2].GetMethod().DeclaringType.Assembly.GetName().Name;
+                        ObservedItem.ModName = stackFrames[3].GetMethod().DeclaringType.Assembly.GetName().Name;
                     } catch { Debug.LogError("Failed to retrieve calling assembly name"); }
                 }
             }
         }
 
-        public void BeginObserving(string actionName/*, bool onlyBuildings = false*/, string modname = "Vanilla", bool autoObserving = false)
+        public void TerminateObservingIfVanilla()
+        {
+            if(Observing && ObservedItem != null && ObservedItem.AutoTerminate) {
+                EndObserving();
+            }
+        }
+
+        public void BeginObserving(string actionName/*, bool onlyBuildings = false*/, string modname = "Vanilla", bool autoObserving = false, bool autoTerminate = false)
         {
             if(!LoadingExtension.Instsance.m_detoured)
             {
@@ -85,6 +92,7 @@ namespace UndoMod
             ObservedItem = new ActionQueueItem(actionName);
             ObservedItem.ModName = modname;
             ObservedItem.AutoObserving = autoObserving;
+            ObservedItem.AutoTerminate = autoTerminate;
             ObservedCashBalance = EconomyManager.instance.InternalCashAmount;
             Observing = true;
             Invalidated = false;
@@ -157,7 +165,7 @@ namespace UndoMod
                     }
                 }
                 Singleton<SimulationManager>.instance.AddAction(() => {
-                    Debug.Log("Action " + item);
+                    //Debug.Log("Action " + item);
                     PerformingAction = true;
                     if (!(redo ? item.Redo() : item.Undo()))
                     {

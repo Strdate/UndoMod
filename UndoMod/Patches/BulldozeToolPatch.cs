@@ -69,7 +69,7 @@ namespace UndoMod.Patches
     {
         static void Prefix()
         {
-            UndoMod.Instsance.BeginObserving("DeletePropImpl");
+            UndoMod.Instsance.BeginObserving("Remove prop");
         }
 
         static void Finalizer(Exception __exception)

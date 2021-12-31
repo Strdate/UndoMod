@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using System;
+using UnityEngine;
 
 namespace UndoMod.Patches
 {
@@ -9,12 +10,7 @@ namespace UndoMod.Patches
     {
         static void Prefix()
         {
-            UndoMod.Instsance.BeginObserving("Build tree");
-        }
-
-        static void Finalizer(Exception __exception)
-        {
-            UndoMod.Instsance.FinalizeObserving(__exception);
+            UndoMod.Instsance.BeginObserving("Build tree", autoTerminate: true);
         }
     }
 }
