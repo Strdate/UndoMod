@@ -85,7 +85,9 @@ namespace UndoMod
                 if(_lastBeginObserving.AddSeconds(1) < DateTime.Now)
                 {
                     _lastBeginObserving = DateTime.Now;
-                    UndoMod.Instsance.BeginObserving("<unknown>", "", true);
+                    Singleton<SimulationManager>.instance.AddAction(() => {
+                        UndoMod.Instsance.BeginObserving("<unknown>", "", true);
+                    });
                 }
             }
         }

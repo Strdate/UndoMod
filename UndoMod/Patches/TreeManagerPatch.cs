@@ -48,7 +48,7 @@ namespace UndoMod.Patches
                         UndoMod.Instsance.InvalidateAll();
                     }
                 } else {
-                    //Invalidator.Instance.InvalidTrees.Add(tree);
+                    //
                 }
             }
             UndoMod.Instsance.TerminateObservingIfVanilla();
