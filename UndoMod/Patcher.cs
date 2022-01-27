@@ -22,6 +22,7 @@ namespace UndoMod
             _harmony.PatchAll(typeof(Patcher).Assembly);
             NetManagerPatch_PreReleaseSegmentImplementation.ManualPatch(_harmony);
             NetManagerPatch_PreReleaseNodeImplementation.ManualPatch(_harmony);
+            NetManagerPatch_CreateSegment.ManualPatch(_harmony);
             if(!EMLCompatibility) {
                 PropManagerPatch_CreateProp.ManualPatch(_harmony);
                 PropManagerPatch_ReleaseProp.ManualPatch(_harmony);

@@ -125,10 +125,24 @@ namespace UndoMod.Patches
         }
     }
 
-    [HarmonyPatch(typeof(NetManager))]
-    [HarmonyPatch("CreateSegment")]
+    //[HarmonyPatch(typeof(NetManager))]
+    //[HarmonyPatch("CreateSegment")]
     class NetManagerPatch_CreateSegment
     {
+        private static MethodInfo createSegment_original = typeof(NetManager).GetMethod("CreateSegment", BindingFlags.Public | BindingFlags.Instance, null,
+            new Type[] { typeof(ushort).MakeByRefType(), typeof(Randomizer).MakeByRefType(), typeof(NetInfo), typeof(TreeInfo), typeof(ushort), typeof(ushort), typeof(Vector3), typeof(Vector3), typeof(uint), typeof(uint), typeof(bool) }, null);
+        private static MethodInfo createSegment_postfix = typeof(NetManagerPatch_CreateSegment).GetMethod("Postfix", BindingFlags.NonPublic | BindingFlags.Static);
+
+        internal static void ManualPatch(Harmony _harmony)
+        {
+            _harmony.Patch(original: createSegment_original, postfix: new HarmonyMethod(createSegment_postfix));
+        }
+
+        internal static void ManualUnpatch(Harmony _harmony)
+        {
+            _harmony.Unpatch(createSegment_original, createSegment_postfix);
+        }
+
         static void Postfix(ref ushort segment, bool __result)
         {
             //Debug.Log("Harmony patch: create segment postfix");

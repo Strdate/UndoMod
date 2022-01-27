@@ -13,7 +13,7 @@ namespace UndoMod
 {
     public class ModInfo : IUserMod
     {
-        public static readonly string VERSION = "BETA 0.3.0";
+        public static readonly string VERSION = "BETA 0.4.0";
         public const string settingsFileName = "UndoMod";
 
         public string Name => "Undo It!";
